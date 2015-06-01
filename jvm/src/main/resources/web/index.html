@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html ng-app="app">
+<head>
+    <!--TODO: figure out how to include CSS from webjar-->
+    <link rel="stylesheet" type="text/css"
+          href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.4/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css"
+          href="web/classes/css/bootstrap-combobox.css">
+    <meta charset="UTF-8">
+    <title>The Scala.js Tutorial</title>
+</head>
+<body>
+
+<div class="container">
+    <div class="row">
+        <div class="well">
+            <h1>Experiment Picker</h1>
+        </div>
+    </div>
+    <div class="row" ng-controller="ExperimentController">
+        <form role="form">
+            <div class="form-group">
+                <label>Experiments</label>
+                <select class="combobox form-control" name="normal" ng-model="selectedExperiment">
+                    <option value="" selected="selected">Select an experiment</option>
+                    <option ng-repeat="experiment in experiments" value="{{experiment}}">{{experiment}}</option>
+                </select>
+                <select class="combobox form-control" name="normal" ng-model="selectedDate">
+                    <option value="" selected="selected">Select a date</option>
+                    <option ng-repeat="date in dates" value="{{date}}">{{date}}</option>
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Include JavaScript dependencies -->
+<script type="text/javascript" src="./web/js-jsdeps.js"></script>
+<!-- Include Scala.js compiled code -->
+<script type="text/javascript" src="./web/js-fastopt.js"></script>
+<!-- Run main object -->
+<script type="text/javascript" src="./web/js-launcher.js"></script>
+
+</body>
+</html>
