@@ -1,4 +1,7 @@
+//enablePlugins(JavaAppPackaging)
+
 import sbt.Keys._
+import spray.revolver.RevolverPlugin._
 
 name := "scalajs-dashboard"
 
@@ -19,16 +22,11 @@ val angulateDebugFlags = Seq(
 val jquery = "2.1.3"
 val jqueryBinding = "0.8.0"
 val bootstrap = "3.3.4"
-val angular = "1.4.0"
+val angular = "1.3.15"
 val angularBinding = "0.2"
 val utest = "0.3.0"
+val akkaStream = "1.0-RC2"
 
-lazy val jvm = project.
-  settings(commonSettings: _*).
-  settings(
-    libraryDependencies ++= Seq( "biz.enef" %% "surf-akka-rest" % "0.1-SNAPSHOT" )
-  )
-  
 
 lazy val js = project.
   settings(commonSettings: _*).
@@ -51,22 +49,29 @@ lazy val js = project.
       RuntimeDOM,
       "org.webjars" % "jquery" % jquery / "jquery.js",
       "org.webjars" % "bootstrap" % bootstrap / "bootstrap.min.js" dependsOn "jquery.js",
-      "org.webjars" % "angularjs" % angular / "angular.min.js" dependsOn "jquery.js",
-      ProvidedJS / "js/bootstrap-combobox.js" dependsOn "jquery.js"
+      "org.webjars.bower" % "angular" % angular / "angular.min.js" dependsOn "jquery.js",
+      ProvidedJS / "ng-websocket.js" dependsOn "angular.min.js",
+      ProvidedJS / "bootstrap-combobox.js" dependsOn "jquery.js",
+      "org.webjars" % "d3js" % "3.5.5" / "d3.min.js",
+      "org.webjars" % "nvd3" % "1.7.1" / "nv.d3.min.js" dependsOn "d3.min.js",
+//      "org.webjars" % "angular-nvd3" % "0.1.1" / "angular-nvd3.min.js" dependsOn "nv.d3.min.js" dependsOn "angular.min.js"
+      ProvidedJS / "angular-nvd3.min.js" dependsOn "nv.d3.min.js" dependsOn "angular.min.js"
     ),
    testFrameworks ++= Seq(new TestFramework("utest.runner.Framework"))
-  ).
-  enablePlugins(ScalaJSPlugin)
-  
+  ).enablePlugins(ScalaJSPlugin)
 
-// standalone application (server+web client in a single fat JAR)
-lazy val app = project.in( file(".") ).
-  dependsOn( jvm ).
-  settings(commonSettings:_*).
+lazy val jvm = project.
+  settings(commonSettings: _*).
+  settings(Revolver.settings: _*).
   settings(
-    // build JS and add JS resources
-    (compile in Compile) <<= (compile in Compile).dependsOn(fastOptJS in (js,Compile)),
-    mainClass in (Compile,run) := Some("com.oomagnitude.Server")
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-http-scala-experimental" % akkaStream,
+      "com.typesafe.akka" %% "akka-http-spray-json-experimental"    % akkaStream),
+    (resourceGenerators in Compile) <+=
+      (fastOptJS in Compile in js, packageScalaJSLauncher in Compile in js)
+        .map((f1, f2) => Seq(f1.data, f2.data)),
+    watchSources <++= (watchSources in js)
   )
-    
+
+lazy val root = project.in(file(".")).aggregate(js, jvm)
 

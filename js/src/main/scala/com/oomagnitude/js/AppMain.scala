@@ -1,7 +1,7 @@
 package com.oomagnitude.js
 
 import biz.enef.angulate._
-import com.oomagnitude.js.controllers.ExperimentController
+import com.oomagnitude.js.controllers.{ChartController, ExperimentController}
 import com.oomagnitude.js.service.ExperimentService
 
 import scala.language.implicitConversions
@@ -14,9 +14,10 @@ object AppMain extends JSApp {
   }
 
   def setup(): Unit = {
-    val module = angular.createModule("app", Nil)
+    val module = angular.createModule("app", "ngWebsocket" :: "nvd3" :: Nil)
 
     module.controllerOf[ExperimentController]("ExperimentController")
+    module.controllerOf[ChartController]("ChartController")
 
     module.serviceOf[ExperimentService]
 
