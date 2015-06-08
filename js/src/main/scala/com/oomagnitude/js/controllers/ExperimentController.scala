@@ -6,9 +6,6 @@ import com.oomagnitude.js.service.ExperimentService
 import scala.scalajs.js
 import scala.util.{Failure, Success}
 
-case class DataPoint(timestep: Long, value: Double)
-case class Data(key: String, values: js.Array[js.Object])
-
 class ExperimentController($scope: js.Dynamic, experimentService: ExperimentService) extends ScopeController {
   $scope.experiments = js.Array[String]()
   $scope.dates = js.Array[String]()
@@ -40,6 +37,7 @@ class ExperimentController($scope: js.Dynamic, experimentService: ExperimentServ
       }
   })
 
+  // TODO: get notified of new experiment runs w/o refreshing the page
   experimentService.experiments() onComplete {
     case Success(res) =>
       $scope.experiments = res

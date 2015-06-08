@@ -8,7 +8,7 @@ import org.scalajs.dom.raw.Document
 
 import scala.scalajs.js
 
-class ExperimentService($http: HttpService, $websocket: NgWebsocketService) extends Service {
+class ExperimentService($http: HttpService, $websocket: NgWebsocketService, displaySettingService: DisplaySettingService) extends Service {
   val experimentSelection = js.Dynamic.literal(selectedExperiment = "", selectedDate = "", selectedDataSource = "")
 
   def resetExperiment(): Unit = {
@@ -33,7 +33,11 @@ class ExperimentService($http: HttpService, $websocket: NgWebsocketService) exte
   def dataSources(experiment: String, date: String): HttpPromise[js.Array[String]] = $http.get(s"/api/experiments/$experiment/$date")
 
   def dataSource(experiment: String, date: String, dataSource: String): NgWebsocket = {
-    $websocket.$new(s"${getWebsocketUri(dom.document)}/api/experiments/$experiment/$date/$dataSource")
+    $websocket.$new(s"${getWebsocketUri(dom.document)}" +
+      s"/api/experiments/$experiment/$date/$dataSource?" +
+      s"initialBatchSize=${displaySettingService.displaySettings.maxDataPointsPerSeries}&" +
+      s"dataPointFrequencySeconds=${displaySettingService.displaySettings.dataPointFrequencySeconds}&" +
+      s"timestepResolution=${displaySettingService.displaySettings.timestepResolution}")
   }
 
   def getWebsocketUri(document: Document): String = {

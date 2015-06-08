@@ -26,6 +26,7 @@ val angular = "1.3.15"
 val angularBinding = "0.2"
 val utest = "0.3.0"
 val akkaStream = "1.0-RC2"
+val uri = "1.15.0"
 
 
 lazy val js = project.
@@ -54,7 +55,6 @@ lazy val js = project.
       ProvidedJS / "bootstrap-combobox.js" dependsOn "jquery.js",
       "org.webjars" % "d3js" % "3.5.5" / "d3.min.js",
       "org.webjars" % "nvd3" % "1.7.1" / "nv.d3.min.js" dependsOn "d3.min.js",
-//      "org.webjars" % "angular-nvd3" % "0.1.1" / "angular-nvd3.min.js" dependsOn "nv.d3.min.js" dependsOn "angular.min.js"
       ProvidedJS / "angular-nvd3.min.js" dependsOn "nv.d3.min.js" dependsOn "angular.min.js"
     ),
    testFrameworks ++= Seq(new TestFramework("utest.runner.Framework"))

@@ -1,26 +1,24 @@
 package com.oomagnitude.js.controllers
 
 import biz.enef.angulate.ScopeController
-import com.oomagnitude.js.service.ExperimentService
+import com.oomagnitude.js.service.{DisplaySettingService, ExperimentService}
 import ngwebsocket.NgWebsocket
 
 import scala.scalajs.js
 import scala.scalajs.js.JSON
 
 // TODO: pass in chart options from the outside
-class ChartController($scope: js.Dynamic, experimentService: ExperimentService) extends ScopeController {
+class ChartController($scope: js.Dynamic, experimentService: ExperimentService, displaySettingService: DisplaySettingService) extends ScopeController {
   import com.oomagnitude.js.JsImplicits._
 
-  val maxDataPointsPerSeries = 100
-  val closeMessage = "END"
   var webSocket: Option[NgWebsocket] = None
 
   $scope.experimentSelection = experimentService.experimentSelection
 
   // Params:
-  // number of data points in chart (per time series) --> amount to buffer at the beginning
   // data point interval (in seconds)
   // data point resolution (how many timesteps to skip per data point)
+  // starting timestep
 
   val margin = js.Dynamic.literal(top = 20, right = 20, bottom = 40, left = 55)
   val chart = js.Dynamic.literal(`type` = "lineChart", height = 450, width=960, margin = margin,
@@ -40,12 +38,8 @@ class ChartController($scope: js.Dynamic, experimentService: ExperimentService) 
         ws.$on("$open", { () => println(s"opened connection") })
 
         ws.$on("$message", { (data: String) ⇒
-          if (data == closeMessage) {
-            ws.$close()
-          } else {
-            val parsed = JSON.parse(data).asInstanceOf[js.Object]
-            $scope.$apply({ () => addDataPoint(parsed) })
-          }
+          val parsed = JSON.parse(data).asInstanceOf[js.Object]
+          $scope.$apply({ () => addDataPoint(parsed) })
         })
 
         ws.$on("$close", { () ⇒ println(s"closed connection") })
@@ -68,7 +62,7 @@ class ChartController($scope: js.Dynamic, experimentService: ExperimentService) 
 
   private def addDataPoint(dataPoint: js.Object): Unit = {
     $scope.data.asArray(0).values.push(dataPoint)
-    if (numDataPoints() > maxDataPointsPerSeries) {
+    if (numDataPoints() > displaySettingService.displaySettings.maxDataPointsPerSeries.asInstanceOf[Int]) {
       $scope.data.asArray(0).values.shift()
     }
   }

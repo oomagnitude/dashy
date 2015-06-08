@@ -2,7 +2,7 @@ package com.oomagnitude.js
 
 import biz.enef.angulate._
 import com.oomagnitude.js.controllers.{ChartController, ExperimentController}
-import com.oomagnitude.js.service.ExperimentService
+import com.oomagnitude.js.service.{DisplaySettingService, ExperimentService}
 
 import scala.language.implicitConversions
 import scala.scalajs.js.JSApp
@@ -20,6 +20,7 @@ object AppMain extends JSApp {
     module.controllerOf[ChartController]("ChartController")
 
     module.serviceOf[ExperimentService]
+    module.serviceOf[DisplaySettingService]
 
     module.run(initApp _)
   }

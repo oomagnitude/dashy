@@ -36,6 +36,8 @@ trait Protocol extends DefaultJsonProtocol {
   implicit val sSFormat: RootJsonFormat[Seq[String]] = seqFormat
 }
 
+case class FetchParams(initialBatchSize: Int, timestepResolution: Option[Int], dataPointFrequencySeconds: Option[Long])
+
 class Server(implicit fm: FlowMaterializer, system: ActorSystem, executor: ExecutionContextExecutor) extends Directives with Protocol {
   import Server._
 
@@ -60,8 +62,11 @@ class Server(implicit fm: FlowMaterializer, system: ActorSystem, executor: Execu
         } ~
         pathPrefix("api") {
           path("experiments" / Segment / Segment / Segment) { (experimentName, date, dataSource) =>
-            val path = ResultsPath.resolve(experimentName).resolve(date).resolve("json").resolve(dataSource)
-            handleWebsocketMessages(Handlers.streamFile(path).via(reportErrorsFlow))
+            parameters('initialBatchSize.as[Int], 'timestepResolution.as[Option[Int]],
+              'dataPointFrequencySeconds.as[Option[Long]]).as(FetchParams) { fetchParams =>
+              val path = ResultsPath.resolve(experimentName).resolve(date).resolve("json").resolve(dataSource)
+              handleWebsocketMessages(Handlers.streamFile(path, fetchParams).via(reportErrorsFlow))
+            }
           } ~
           path("experiments" / Segment / Segment) { (experimentName, date) =>
             complete {
