@@ -1,8 +1,8 @@
-package com.oomagnitude.js
+package com.oomagnitude.angular
 
 import biz.enef.angulate._
-import com.oomagnitude.js.controllers.{ChartController, ExperimentController}
-import com.oomagnitude.js.service.{DisplaySettingService, ExperimentService}
+import com.oomagnitude.angular.controllers.{ChartController, ExperimentController}
+import com.oomagnitude.angular.service.{ExperimentService, DisplaySettingService}
 
 import scala.language.implicitConversions
 import scala.scalajs.js.JSApp

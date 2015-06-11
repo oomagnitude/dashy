@@ -4,6 +4,7 @@ import java.nio.file.Path
 
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl._
+import com.oomagnitude.api.DataSourceFetchParams
 import com.oomagnitude.streams.Flows
 
 import scala.concurrent.duration._
@@ -20,20 +21,20 @@ object Handlers {
     }
   }
 
-  def streamFile(path: Path, params: FetchParams): Flow[Message, Message, Any] = {
+  def streamFile(path: Path, params: DataSourceFetchParams): Flow[Message, Message, Any] = {
     // source that emits one string for every line in the file
     val fileSource = lineByLineFile(path)
 
     // source that emits every data point (message) that will be sent to the client
     val everyDataPoint =
-      if (params.timestepResolution.nonEmpty) {
-        val timestepResolution = params.timestepResolution.get
+      if (params.resolution.nonEmpty) {
+        val timestepResolution = params.resolution.get
         fileSource.via(everyN(timestepResolution))
       } else fileSource
 
     // source that will emit a data point no more often than requested by the client
-    val throttledSource: Source[String, _] = if (params.dataPointFrequencySeconds.nonEmpty) {
-        val dataPointFrequency = (params.dataPointFrequencySeconds.get seconds)
+    val throttledSource: Source[String, _] = if (params.frequencySeconds.nonEmpty) {
+        val dataPointFrequency = (params.frequencySeconds.get seconds)
         everyDataPoint
           // immediately return all data points up to the initial batch size
           .take(params.initialBatchSize)

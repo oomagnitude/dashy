@@ -1,7 +1,7 @@
-package com.oomagnitude.js.controllers
+package com.oomagnitude.angular.controllers
 
 import biz.enef.angulate.ScopeController
-import com.oomagnitude.js.service.ExperimentService
+import com.oomagnitude.angular.service.ExperimentService
 
 import scala.scalajs.js
 import scala.util.{Failure, Success}
