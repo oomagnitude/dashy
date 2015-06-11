@@ -1,4 +1,4 @@
-package com.oomagnitude.js
+package com.oomagnitude.angular
 
 import scala.scalajs.js
 

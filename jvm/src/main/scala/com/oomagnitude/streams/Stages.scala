@@ -48,7 +48,6 @@ object Stages {
               val numDropped = possibleMatchPos + separatorBytes.size
               buffer = buffer.drop(possibleMatchPos + separatorBytes.size)
               val sizeAfter = buffer.size
-              //              println(List(sizeBefore, sizeAfter, numDropped).mkString(","))
               nextPossibleMatch -= possibleMatchPos + separatorBytes.size
               doParse(parsedLinesSoFar :+ parsedLine)
             } else {

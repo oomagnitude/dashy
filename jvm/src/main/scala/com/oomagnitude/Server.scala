@@ -6,12 +6,14 @@ import java.nio.file.Paths
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.marshalling.ToResponseMarshallable._
+import akka.http.scaladsl.model.{HttpEntity, MediaTypes}
 import akka.http.scaladsl.server.Directives
 import akka.stream.FlowMaterializer
 import akka.stream.scaladsl.Flow
-import akka.stream.stage.{TerminationDirective, SyncDirective, Context, PushStage}
+import akka.stream.stage.{Context, PushStage, SyncDirective, TerminationDirective}
+import com.oomagnitude.api.DataSourceFetchParams
+import com.oomagnitude.pages.Page
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
-import akka.stream.UniformFanInShape
 
 import scala.concurrent.ExecutionContextExecutor
 
@@ -28,6 +30,7 @@ object Server {
 
   val JvmRoot = Paths.get(".")
   val JsRoot = JvmRoot.resolve("..").resolve("js").resolve("target").resolve("scala-2.11")
+  val JsResources = JsRoot.resolve("classes").resolve("js")
   val ScalaJSOutput = JsRoot
   val CssOutput = JsRoot.resolve("classes").resolve("css")
 }
@@ -35,8 +38,6 @@ object Server {
 trait Protocol extends DefaultJsonProtocol {
   implicit val sSFormat: RootJsonFormat[Seq[String]] = seqFormat
 }
-
-case class FetchParams(initialBatchSize: Int, timestepResolution: Option[Int], dataPointFrequencySeconds: Option[Long])
 
 class Server(implicit fm: FlowMaterializer, system: ActorSystem, executor: ExecutionContextExecutor) extends Directives with Protocol {
   import Server._
@@ -48,11 +49,24 @@ class Server(implicit fm: FlowMaterializer, system: ActorSystem, executor: Execu
       pathSingleSlash {
         getFromResource("web/index.html")
       } ~
+        path("scalarx") {
+          complete{
+            HttpEntity(
+              MediaTypes.`text/html`,
+              "<!DOCTYPE html>\n" + Page.Skeleton.render
+            )
+          }
+        } ~
         // Scala-JS puts them in the root of the resource directory per default,
         // so that's where we pick them up
         pathPrefix("js") {
           path(Segment) { filename =>
-            getFromFile(ScalaJSOutput.resolve(filename).toFile)
+            val outputFile = ScalaJSOutput.resolve(filename).toFile
+            if (outputFile.exists()) {
+              getFromFile(outputFile)
+            } else {
+              getFromFile(JsResources.resolve(filename).toFile)
+            }
           }
         } ~
         pathPrefix("css") {
@@ -61,11 +75,11 @@ class Server(implicit fm: FlowMaterializer, system: ActorSystem, executor: Execu
           }
         } ~
         pathPrefix("api") {
-          path("experiments" / Segment / Segment / Segment) { (experimentName, date, dataSource) =>
+          path("data" / Segment / Segment / Segment) { (experimentName, date, dataSource) =>
             parameters('initialBatchSize.as[Int], 'timestepResolution.as[Option[Int]],
-              'dataPointFrequencySeconds.as[Option[Long]]).as(FetchParams) { fetchParams =>
+              'dataPointFrequencySeconds.as[Option[Long]]).as(DataSourceFetchParams) { params =>
               val path = ResultsPath.resolve(experimentName).resolve(date).resolve("json").resolve(dataSource)
-              handleWebsocketMessages(Handlers.streamFile(path, fetchParams).via(reportErrorsFlow))
+              handleWebsocketMessages(Handlers.streamFile(path, params).via(reportErrorsFlow))
             }
           } ~
           path("experiments" / Segment / Segment) { (experimentName, date) =>

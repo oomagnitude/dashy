@@ -1,7 +1,7 @@
-package com.oomagnitude.js.controllers
+package com.oomagnitude.angular.controllers
 
 import biz.enef.angulate.ScopeController
-import com.oomagnitude.js.service.{DisplaySettingService, ExperimentService}
+import com.oomagnitude.angular.service.{DisplaySettingService, ExperimentService}
 import ngwebsocket.NgWebsocket
 
 import scala.scalajs.js
@@ -9,7 +9,7 @@ import scala.scalajs.js.JSON
 
 // TODO: pass in chart options from the outside
 class ChartController($scope: js.Dynamic, experimentService: ExperimentService, displaySettingService: DisplaySettingService) extends ScopeController {
-  import com.oomagnitude.js.JsImplicits._
+  import com.oomagnitude.angular.JsImplicits._
 
   var webSocket: Option[NgWebsocket] = None
 
