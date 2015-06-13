@@ -5,7 +5,6 @@ import com.oomagnitude.rx.view.Charts.ChartType
 import org.scalajs.dom.raw.{Event, MouseEvent}
 import rx._
 
-import scala.scalajs.js.JSON
 import scalatags.JsDom.all._
 
 class Chart(val chartType: ChartType, val data: ChartData, removeChart: (String) => Unit,
@@ -15,17 +14,31 @@ class Chart(val chartType: ChartType, val data: ChartData, removeChart: (String)
 
   val id = java.util.UUID.randomUUID.toString
   private[this] val removeButton = {
-    val remove = bs.btnDefault(bootstrap.removeCircle).render
-    remove.onclick = {e: MouseEvent =>  data.closed() = true; removeChart(id)}
+    val remove = bs.btnDefault(
+      onclick:= {e: MouseEvent =>  data.closed() = true; removeChart(id)},
+      bootstrap.removeCircle
+    ).render
     div(cls:="btn-group pull-right", role:="group", remove).render
   }
   private[this] val controls = {
-    val frequencyInput = input(`type`:="text").render
-    frequencyInput.onchange = {e: Event =>
-      // TODO: need to get text of the element
-      data.frequency() = frequencyInput.textContent.toInt
+    val frequencyInput = input(`type`:="number").render
+    frequencyInput.onchange = {(e: Event) =>
+      data.frequency() = frequencyInput.value.toInt
     }
-    bs.formInline(bs.btnGroup(Dynamic.pauseButton(data.paused)), frequencyInput).render
+
+    val seekInput = input(`type`:="number").render
+    seekInput.onchange = {(e: Event) =>
+      data.seekLocation() = seekInput.value.toInt
+    }
+
+    val resolutionInput = input(`type`:="number").render
+    resolutionInput.onchange = {(e: Event) =>
+      data.timestepResolution() = resolutionInput.value.toInt
+    }
+
+    bs.formInline(bs.btnGroup(Dynamic.pauseButton(data.paused)), bs.formGroup(label("refresh millis"),
+      frequencyInput), bs.formGroup(label("seek to"),
+      seekInput), bs.formGroup(label("resolution"), resolutionInput)).render
   }
 
   private[this] val chartElement = bootstrap.panelBody.render

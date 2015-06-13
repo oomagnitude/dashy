@@ -5,7 +5,7 @@ import com.oomagnitude.rx.model.ExperimentSelection
 import combobox.Combobox
 import org.scalajs.dom
 import org.scalajs.dom.html
-import org.scalajs.dom.raw.MouseEvent
+import org.scalajs.dom.raw.{Event, MouseEvent}
 import org.scalajs.jquery._
 import rx._
 
@@ -79,18 +79,16 @@ object Templates {
     
     def pauseButton(paused: Var[Boolean]): html.Button = {
       val buttonText = Var("Pause")
-      val pause = bs.btnDefault(buttonText.asFrag).render
-
-      pause.onclick = { e: MouseEvent =>
-        if (paused()) {
-          buttonText() = "Pause"
-          paused() = false
-        } else {
-          buttonText() = "Resume"
-          paused() = true
-        }
-      }
-      pause
+      bs.btnDefault(buttonText.asFrag,
+        onclick:= { e: MouseEvent =>
+          if (paused()) {
+            buttonText() = "Pause"
+            paused() = false
+          } else {
+            buttonText() = "Resume"
+            paused() = true
+          }
+      }).render
     }
 
     def ulist(items: Rx[List[String]]): html.UList = ul(toListItems(items).asFrags()).render
@@ -119,11 +117,8 @@ object Templates {
     val dateSelect = combobox(datesDisplay, selection.date)
     val dataSourceSelect = combobox(dataSourceDisplay, selection.dataSource)
 
-    val addChartButton = bs.btnPrimary("Create Chart").render
-    addChartButton.onclick = addChart
-
-    val clearButton = bs.btnDefault("Clear").render
-    clearButton.onclick = {e: MouseEvent => tags() = List.empty}
+    val addChartButton = bs.btnPrimary(onclick:= addChart, "Create Chart").render
+    val clearButton = bs.btnDefault("Clear", onclick:= {e: MouseEvent => tags() = List.empty}).render
 
     bs.formHorizontal(
       bs.formGroup(bs.col2(label(cls:="control-label", "find data sources")), bs.col10(bs.formInline(bs.formGroup(experimentSelect, dateSelect, dataSourceSelect)))),
