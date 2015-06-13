@@ -2,15 +2,19 @@ package com.oomagnitude.streams
 
 import java.nio.file.Path
 
-import akka.http.scaladsl.model.ws.{TextMessage, Message}
+import akka.actor.ActorRef
+import akka.http.scaladsl.model.ws.{Message, TextMessage}
+import akka.stream.OverflowStrategy
 import akka.stream.io.SynchronousFileSource
 import akka.stream.scaladsl._
 import akka.util.ByteString
+import com.oomagnitude.api.{DataPoint, DataSourceFetchParams}
+import com.oomagnitude.streams.StreamDispatch.Subscribe
 
 import scala.concurrent.Future
-import scala.concurrent.duration.FiniteDuration
 
 object Flows {
+  import scala.concurrent.duration._
   object Tick
 
   def lineByLineFile(path: Path): Source[ByteString, Future[Long]]#Repr[String, Future[Long]] = {
@@ -37,6 +41,51 @@ object Flows {
 
       (sink.inlet, mapStringToMsg.outlet)
     }
+  }
+
+  def parseFetchParams = Flow[Message].map[DataSourceFetchParams] {
+    case msg: TextMessage.Strict =>
+      // TODO: expose or handle exceptions thrown here. Right now they are being swallowed.
+      upickle.read[DataSourceFetchParams](msg.text)
+    case msg: Message =>
+      throw new UnsupportedOperationException(s"message $msg not supported")
+  }
+
+  def dataPointToMessage = Flow[DataPoint].map { dataPoint =>
+    // TODO: expose or handle exceptions thrown here. Right now they are being swallowed.
+    val serialized = upickle.write(dataPoint)
+    TextMessage.Strict(serialized)
+  }
+
+  def dynamicDataStreamFlow(dispatchRef: ActorRef, bufferSize: Int): Flow[Message, Message, Any] = {
+    Flow(Source.actorRef[DataPoint](bufferSize, OverflowStrategy.fail)) {
+      implicit builder =>
+        { (responseSource) =>
+          import FlowGraph.Implicits._
+
+          // deserialize the incoming client messages into params objects
+          val msgToParams = builder.add(parseFetchParams)
+          // given individual data points, serialize them into ws messages
+          val dataPointToMsg = builder.add(dataPointToMessage)
+
+          // patches in 1. messages from client; 2. subscriber (downstream) that sends messages to client
+          val merge = builder.add(Merge[Any](2))
+          val dispatch = builder.add(Sink.actorRef(dispatchRef, StreamDispatch.terminated))
+
+          // 0. inform dispatch actor of downstream actor that is subscribing
+          // 1. send incoming ws messages to the dispatch actor
+          // then: send the merged messages to the dispatch actor
+          builder.matValue ~> Flow[ActorRef].map(Subscribe) ~> merge.in(0)
+                                                msgToParams ~> merge.in(1)
+                                                               merge ~> dispatch
+
+          // convert response objects into ws messages
+          // the actor that is materialized as the response source then subscribes to the output of the above graph
+          responseSource ~> dataPointToMsg
+
+          (msgToParams.inlet, dataPointToMsg.outlet)
+        }
+    }.mapMaterialized(_ ⇒ ())
   }
 
   /**
@@ -89,5 +138,33 @@ object Flows {
 
       (zip.in1, unzip.outlet)
     }
+  }
+
+  def fileSource(path: Path, params: DataSourceFetchParams): Source[DataPoint, _] = {
+    // source that emits one string for every line in the file
+    val fileSource = lineByLineFile(path)
+
+    // source that emits every data point (message) that will be sent to the client
+    var everyDataPoint = fileSource
+      .map(upickle.read[DataPoint])
+      // TODO: This will not work for metrics that are not published on every timestep.
+      // TODO: Need to get metric metadata (start timestep, stop timestep, frequency) in order to fix.
+      .filter(_.timestep % params.resolution == 0)
+
+    if (params.timestepOffset.nonEmpty)
+      everyDataPoint = everyDataPoint.filter(_.timestep >= params.timestepOffset.get)
+
+    // source that will emit a data point no more often than requested by the client
+    if (params.frequencySeconds.nonEmpty) {
+      val dataPointFrequency = params.frequencySeconds.get.seconds
+      everyDataPoint
+        // immediately return all data points up to the initial batch size
+        .take(params.initialBatchSize)
+        // throttle all subsequent data points
+        .concat(
+          everyDataPoint
+            .drop(params.initialBatchSize)
+            .via(throttled(delay = 0.seconds, interval = dataPointFrequency)))
+    } else everyDataPoint
   }
 }

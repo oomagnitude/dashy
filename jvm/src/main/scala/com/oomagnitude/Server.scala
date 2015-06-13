@@ -1,9 +1,9 @@
 package com.oomagnitude
 
 import java.io.File
-import java.nio.file.Paths
+import java.nio.file.{Path, Paths}
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.marshalling.ToResponseMarshallable._
 import akka.http.scaladsl.model.{HttpEntity, MediaTypes}
@@ -11,8 +11,8 @@ import akka.http.scaladsl.server.Directives
 import akka.stream.FlowMaterializer
 import akka.stream.scaladsl.Flow
 import akka.stream.stage.{Context, PushStage, SyncDirective, TerminationDirective}
-import com.oomagnitude.api.DataSourceFetchParams
 import com.oomagnitude.pages.Page
+import com.oomagnitude.streams.{Flows, StreamDispatch}
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
 import scala.concurrent.ExecutionContextExecutor
@@ -47,15 +47,15 @@ class Server(implicit fm: FlowMaterializer, system: ActorSystem, executor: Execu
       get {
       /* START PAGE */
       pathSingleSlash {
-        getFromResource("web/index.html")
+        complete{
+          HttpEntity(
+            MediaTypes.`text/html`,
+            "<!DOCTYPE html>\n" + Page.Skeleton.render
+          )
+        }
       } ~
-        path("scalarx") {
-          complete{
-            HttpEntity(
-              MediaTypes.`text/html`,
-              "<!DOCTYPE html>\n" + Page.Skeleton.render
-            )
-          }
+        path("angular") {
+          getFromResource("web/index.html")
         } ~
         // Scala-JS puts them in the root of the resource directory per default,
         // so that's where we pick them up
@@ -75,13 +75,25 @@ class Server(implicit fm: FlowMaterializer, system: ActorSystem, executor: Execu
           }
         } ~
         pathPrefix("api") {
-          path("data" / Segment / Segment / Segment) { (experimentName, date, dataSource) =>
-            parameters('initialBatchSize.as[Int], 'timestepResolution.as[Option[Int]],
-              'dataPointFrequencySeconds.as[Option[Long]]).as(DataSourceFetchParams) { params =>
-              val path = ResultsPath.resolve(experimentName).resolve(date).resolve("json").resolve(dataSource)
-              handleWebsocketMessages(Handlers.streamFile(path, params).via(reportErrorsFlow))
-            }
+          path("data" / Segment / Segment / Segment) {(experimentName, date, dataSource) =>
+            val path: Path = ResultsPath.resolve(experimentName).resolve(date).resolve("json").resolve(dataSource)
+            val dispatch = system.actorOf(Props(classOf[StreamDispatch], path, fm))
+            handleWebsocketMessages(Flows.dynamicDataStreamFlow(dispatch, bufferSize = 100).via(reportErrorsFlow))
           } ~
+//          pathPrefix("experimental") {
+//            path("data" / Segment / Segment / Segment) {(experimentName, date, dataSource) =>
+//              val path: Path = ResultsPath.resolve(experimentName).resolve(date).resolve("json").resolve(dataSource)
+//              val dispatch = system.actorOf(Props(classOf[StreamDispatch], path, fm))
+//              handleWebsocketMessages(Flows.dynamicDataStreamFlow(dispatch, bufferSize = 100).via(reportErrorsFlow))
+//            }
+//          } ~
+//          path("data" / Segment / Segment / Segment) { (experimentName, date, dataSource) =>
+//            parameters('initialBatchSize.as[Int], 'timestepResolution.as[Option[Int]],
+//              'dataPointFrequencySeconds.as[Option[Int]]).as(DataSourceFetchParams) { params =>
+//              val path = ResultsPath.resolve(experimentName).resolve(date).resolve("json").resolve(dataSource)
+//              handleWebsocketMessages(Handlers.streamFile(path, params).via(reportErrorsFlow))
+//            }
+//          } ~
           path("experiments" / Segment / Segment) { (experimentName, date) =>
             complete {
               // TODO: how do you handle failure?

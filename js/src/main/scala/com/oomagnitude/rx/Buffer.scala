@@ -22,7 +22,6 @@ object Buffer {
   }
 
   def append[T](signal: Rx[T], buffer: Var[List[T]], size: Option[Int] = None): Unit = {
-    // Update the items list within an observer to guarantee that the side effect only happens once per update cycle
     Obs(signal, skipInitial = true) {
       // prepend new value to the buffer
       var items = signal() :: buffer()
@@ -32,5 +31,18 @@ object Buffer {
       buffer() = items
     }
   }
+}
 
+class Buffer[T](signal: Rx[T]) {
+  val data = Var(List.empty[T])
+  var size: Option[Int] = None
+
+  private[this] val obs = Obs(signal, skipInitial = true) {
+    // prepend new value to the buffer
+    var items = signal() :: data()
+    // truncate buffer to max size
+    size.foreach(s => items = items.take(s))
+    // update the data buffer
+    data() = items
+  }
 }

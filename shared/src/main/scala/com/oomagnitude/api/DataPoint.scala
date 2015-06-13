@@ -1,4 +1,4 @@
-package com.oomagnitude.rx.api
+package com.oomagnitude.api
 
 object DataPoint {
   val zero = DataPoint(0,0)
@@ -13,4 +13,5 @@ object DataPoint {
  * @param timestep
  * @param value
  */
+// TODO: convert original data format to support long timestep (as string)
 case class DataPoint(timestep: Int, value: Double)

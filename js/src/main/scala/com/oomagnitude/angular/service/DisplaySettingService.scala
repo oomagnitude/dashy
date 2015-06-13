@@ -13,7 +13,7 @@ class DisplaySettingService() extends Service {
 
   def fetchParams: DataSourceFetchParams = {
     DataSourceFetchParams(displaySettings.maxDataPointsPerSeries.asInstanceOf[Int],
-      Some(displaySettings.timestepResolution.asInstanceOf[Int]),
-      Some(displaySettings.dataPointFrequencySeconds.asInstanceOf[Int]))
+      displaySettings.timestepResolution.asInstanceOf[Int],
+      Some(displaySettings.dataPointFrequencySeconds.asInstanceOf[Int]), None)
   }
 }

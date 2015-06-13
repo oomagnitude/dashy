@@ -182,6 +182,11 @@
     }
 
   , matcher: function (item) {
+//      console.log("trying to match item = " + item + ", query = " + this.query);
+//      if (!item || !item.trim()) {
+//        console.log("matching empty string");
+//        return true;
+//      }
       return ~item.toLowerCase().indexOf(this.query.toLowerCase());
     }
 

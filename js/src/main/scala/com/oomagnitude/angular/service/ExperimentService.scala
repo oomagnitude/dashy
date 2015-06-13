@@ -35,7 +35,7 @@ class ExperimentService($http: HttpService, $websocket: NgWebsocketService, disp
     $http.get(dataSourcesUrl(ExperimentRunId(experiment, date)))
 
   def dataSource(experiment: String, date: String, dataSource: String): NgWebsocket = {
-    val url = dataSourceUrl(DataSourceId(experiment, date, dataSource), displaySettingService.fetchParams)
+    val url = dataSourceUrl(DataSourceId(experiment, date, dataSource))
     $websocket.$new(url)
   }
 

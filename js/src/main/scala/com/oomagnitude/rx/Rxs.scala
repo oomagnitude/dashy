@@ -27,11 +27,14 @@ object Rxs {
   implicit class RxListOps[T](items: Rx[List[T]])(implicit tToFrag: T => Frag) {
 
     def asFrags(postUpdate: Node => Unit = {n =>}): Frag = {
-      def children = items().map(_.render)
+      def children = {
+        // insert dummy div tag so that the parent is always accessible
+        if (items().isEmpty) List(div().render)
+        else items().map(_.render)
+      }
 
       var last = children
       Obs(items, skipInitial = true) {
-        // TODO: need alternative way to get parent node. This way requires at least one item in the initial list
         val parent = last.head.parentNode
         val newLast = children
         last.foreach(parent.removeChild)

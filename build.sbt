@@ -20,7 +20,7 @@ lazy val dash = crossProject.in(file(".")).
     resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     unmanagedSourceDirectories in Compile += baseDirectory.value  / "shared" / "main" / "scala",
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "scalatags" % "0.4.6",
+      "com.lihaoyi" %%% "scalatags" % "0.5.2",
       "com.lihaoyi" %%% "upickle" % "0.2.7",
       "com.lihaoyi" %%% "utest" % "0.3.0" % "test"
     ),
@@ -31,7 +31,9 @@ lazy val dash = crossProject.in(file(".")).
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-http-scala-experimental" % "1.0-RC2",
     // TODO: replace with upickle
-      "com.typesafe.akka" %% "akka-http-spray-json-experimental" % "1.0-RC2")
+      "com.typesafe.akka" %% "akka-http-spray-json-experimental" % "1.0-RC2"//,
+//      "com.lihaoyi" %% "upickle" % "0.2.7"
+    )
   )
   .jsSettings(
     skip in packageJSDependencies := false,
@@ -41,7 +43,8 @@ lazy val dash = crossProject.in(file(".")).
       "be.doeraene" %%% "scalajs-jquery" % "0.8.0",
       "org.scala-js" %%% "scalajs-dom" % "0.8.0",
       "com.lihaoyi" %%% "scalarx" % "0.2.8",
-      "biz.enef" %%% "scalajs-angulate" % "0.2"
+      "biz.enef" %%% "scalajs-angulate" % "0.2"//,
+//      "com.lihaoyi" %%% "upickle" % "0.2.7"
     ),
     jsDependencies ++= Seq(
       // Makes it possible to run the application from the sbt console (i.e., switches runtime to PhantomJS)

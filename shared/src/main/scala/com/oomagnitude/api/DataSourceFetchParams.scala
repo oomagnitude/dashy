@@ -9,4 +9,5 @@ package com.oomagnitude.api
  *                   evenly apart.
  * @param frequencySeconds how many seconds apart to send new data points
  */
-case class DataSourceFetchParams(initialBatchSize: Int, resolution: Option[Int], frequencySeconds: Option[Long])
+case class DataSourceFetchParams(initialBatchSize: Int, resolution: Int, frequencySeconds: Option[Int],
+                                 timestepOffset: Option[Long])
