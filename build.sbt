@@ -32,32 +32,19 @@ lazy val dash = crossProject.in(file(".")).
       "com.typesafe.akka" %% "akka-http-scala-experimental" % "1.0-RC2",
     // TODO: replace with upickle
       "com.typesafe.akka" %% "akka-http-spray-json-experimental" % "1.0-RC2"//,
-//      "com.lihaoyi" %% "upickle" % "0.2.7"
     )
   )
   .jsSettings(
     skip in packageJSDependencies := false,
-    persistLauncher in Compile := true,
-    persistLauncher in Test := false,
     libraryDependencies ++= Seq(
       "be.doeraene" %%% "scalajs-jquery" % "0.8.0",
       "org.scala-js" %%% "scalajs-dom" % "0.8.0",
       "com.lihaoyi" %%% "scalarx" % "0.2.8",
       "biz.enef" %%% "scalajs-angulate" % "0.2"//,
-//      "com.lihaoyi" %%% "upickle" % "0.2.7"
     ),
     jsDependencies ++= Seq(
       // Makes it possible to run the application from the sbt console (i.e., switches runtime to PhantomJS)
-      RuntimeDOM,
-      "org.webjars" % "jquery" % "2.1.3" / "jquery.js",
-      "org.webjars" % "bootstrap" % "3.3.4" / "bootstrap.min.js" dependsOn "jquery.js",
-      "org.webjars.bower" % "angular" % "1.3.15" / "angular.min.js" dependsOn "jquery.js",
-      ProvidedJS / "ng-websocket.js" dependsOn "angular.min.js",
-      ProvidedJS / "bootstrap-combobox.js" dependsOn "jquery.js",
-      "org.webjars" % "d3js" % "3.5.5" / "d3.min.js",
-      "org.webjars" % "nvd3" % "1.7.1" / "nv.d3.min.js" dependsOn "d3.min.js",
-      ProvidedJS / "angular-nvd3.min.js" dependsOn "nv.d3.min.js" dependsOn "angular.min.js"
-    )
+      RuntimeDOM)
   )
 
 scalaJSStage in Global := FastOptStage
@@ -65,8 +52,7 @@ scalaJSStage in Global := FastOptStage
 lazy val dashJS = dash.js
 lazy val dashJVM = dash.jvm.settings(
   (resourceGenerators in Compile) <+=
-    (fastOptJS in Compile in dashJS, packageScalaJSLauncher in Compile in dashJS)
-      .map((f1, f2) => Seq(f1.data, f2.data)),
+    (fastOptJS in Compile in dashJS).map((f1) => Seq(f1.data)),
   watchSources <++= (watchSources in dashJS)
 ).settings(Revolver.settings: _*)
 

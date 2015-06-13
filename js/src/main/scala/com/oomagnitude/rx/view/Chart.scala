@@ -1,11 +1,11 @@
 package com.oomagnitude.rx.view
 
-import com.oomagnitude.rx.Rxs
 import com.oomagnitude.rx.model.ChartData
 import com.oomagnitude.rx.view.Charts.ChartType
-import org.scalajs.dom.raw.MouseEvent
+import org.scalajs.dom.raw.{Event, MouseEvent}
 import rx._
 
+import scala.scalajs.js.JSON
 import scalatags.JsDom.all._
 
 class Chart(val chartType: ChartType, val data: ChartData, removeChart: (String) => Unit,
@@ -16,26 +16,16 @@ class Chart(val chartType: ChartType, val data: ChartData, removeChart: (String)
   val id = java.util.UUID.randomUUID.toString
   private[this] val removeButton = {
     val remove = bs.btnDefault(bootstrap.removeCircle).render
-    remove.onclick = {e: MouseEvent =>  data.close(); removeChart(id)}
+    remove.onclick = {e: MouseEvent =>  data.closed() = true; removeChart(id)}
     div(cls:="btn-group pull-right", role:="group", remove).render
   }
   private[this] val controls = {
-    import Rxs._
-    val buttonText = Var("Pause")
-    val pause = bs.btnDefault(buttonText.asFrag).render
-    var paused = false
-    pause.onclick = { e: MouseEvent =>
-      if (paused) {
-        buttonText() = "Pause"
-        data.resume()
-        paused = false
-      } else {
-        buttonText() = "Resume"
-        data.pause()
-        paused = true
-      }
+    val frequencyInput = input(`type`:="text").render
+    frequencyInput.onchange = {e: Event =>
+      // TODO: need to get text of the element
+      data.frequency() = frequencyInput.textContent.toInt
     }
-    bs.btnGroup(pause).render
+    bs.formInline(bs.btnGroup(Dynamic.pauseButton(data.paused)), frequencyInput).render
   }
 
   private[this] val chartElement = bootstrap.panelBody.render
@@ -54,7 +44,7 @@ class Chart(val chartType: ChartType, val data: ChartData, removeChart: (String)
     .append("g")
     .attr("transform", "translate(0,0)")
 
-  private[this] val obs = Obs(data.series, skipInitial = true) {
+  Obs(data.series, skipInitial = true) {
     svg.datum(data.series().asJs)
       .transition()
       .duration(Charts.DefaultTransitionDuration)

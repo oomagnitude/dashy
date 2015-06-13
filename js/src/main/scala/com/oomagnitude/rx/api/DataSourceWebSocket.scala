@@ -1,8 +1,11 @@
 package com.oomagnitude.rx.api
 
 import com.oomagnitude.Uris._
-import com.oomagnitude.api.{DataSourceFetchParams, DataSourceId}
-import org.scalajs.dom.raw.{Event, MessageEvent, WebSocket}
+import com.oomagnitude.api.DataSourceId
+import com.oomagnitude.api.StreamControl._
+import org.scalajs.dom.raw.{MessageEvent, WebSocket}
+
+import scala.concurrent.duration.Duration
 
 object DataSourceWebSocket {
   val Connecting = 0 // The connection is not yet open.
@@ -13,27 +16,24 @@ object DataSourceWebSocket {
 
 class DataSourceWebSocket(dataSource: DataSourceId, handleMessage: MessageEvent => Unit) {
   import DataSourceWebSocket._
-  private[this] var webSocket: Option[WebSocket] = None
+  private[this] val webSocket = new WebSocket(dataSourceUrl(dataSource))
+  webSocket.onmessage = handleMessage
 
+  def close() = webSocket.close()
 
-  def close(): Unit = {
-    webSocket.foreach(_.close())
-    webSocket = None
-  }
+  def pause() = send(Pause)
 
-  private def newWebSocket(): Unit = webSocket = Some(new WebSocket(dataSourceUrl(dataSource)))
+  def resume() = send(Resume)
 
-  def open(): Unit = {
-    if (webSocket.nonEmpty) {
-      if (webSocket.get.readyState >= Closing) newWebSocket()
-    } else newWebSocket()
-  }
+  def seek(timestep: Int) = send(Seek(timestep))
 
-  def refreshParams(params: DataSourceFetchParams): Unit = {
-    open()
-    webSocket.foreach { ws =>
-      ws.onopen = {e: Event => ws.send(upickle.write(params))}
-      ws.onmessage = handleMessage
+  def resolution(timestepInterval: Int) = send(Resolution(timestepInterval))
+
+  def frequency(duration: Duration) = send(Frequency(duration.toMillis.toInt))
+
+  private def send(message: StreamControlMessage): Unit = {
+    if (webSocket.readyState == Open) {
+      webSocket.send(upickle.write(message))
     }
   }
 }

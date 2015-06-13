@@ -1,6 +1,5 @@
 package com.oomagnitude.rx
 
-import com.oomagnitude.api.DataSourceFetchParams
 import com.oomagnitude.rx.api.RemoteExperimentApi
 import com.oomagnitude.rx.model.{ChartData, DataSourceSelection, ExperimentSelection}
 import com.oomagnitude.rx.view.Charts.Line
@@ -18,9 +17,6 @@ object Client {
   import Rxs._
   import Templates._
 
-  val DefaultFetchParams = DataSourceFetchParams(initialBatchSize = 100, frequencySeconds = Some(5),
-    resolution = 10, timestepOffset = None)
-  val fetchParams = Var(DefaultFetchParams)
   val charts = Var(List.empty[Chart])
   val chartContainers = Rx{charts().map(_.container)}
 
@@ -32,7 +28,7 @@ object Client {
 
     val dataSourceForm = experimentForm(expSelection, dataSourceSelection.selectedSources,
       {event =>
-        val chartData = new ChartData(dataSourceSelection.selectedSources(), Var(DefaultFetchParams))
+        val chartData = new ChartData(dataSourceSelection.selectedSources())
         charts() = new Chart(Line, chartData, {id => charts() = charts().filterNot(_.id == id)},
           title = Some("Title")) :: charts()
       })

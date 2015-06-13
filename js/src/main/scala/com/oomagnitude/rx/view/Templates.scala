@@ -76,6 +76,22 @@ object Templates {
 
       selectTag
     }
+    
+    def pauseButton(paused: Var[Boolean]): html.Button = {
+      val buttonText = Var("Pause")
+      val pause = bs.btnDefault(buttonText.asFrag).render
+
+      pause.onclick = { e: MouseEvent =>
+        if (paused()) {
+          buttonText() = "Pause"
+          paused() = false
+        } else {
+          buttonText() = "Resume"
+          paused() = true
+        }
+      }
+      pause
+    }
 
     def ulist(items: Rx[List[String]]): html.UList = ul(toListItems(items).asFrags()).render
 
