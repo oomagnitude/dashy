@@ -1,5 +1,7 @@
 package com.oomagnitude.rx.api
 
+import com.oomagnitude.api.DataPoint
+
 import scala.scalajs.js
 import scala.scalajs.js.JSON
 

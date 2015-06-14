@@ -1,12 +1,8 @@
 package com.oomagnitude.rx.model
 
-import com.oomagnitude.api.{ExperimentId, ExperimentRunId}
+import com.oomagnitude.api.{DataSourceId, ExperimentId, ExperimentRunId}
 import com.oomagnitude.rx.api.ExperimentApi
 import rx._
-
-object ExperimentSelection {
-  def apply(api: ExperimentApi) = new ExperimentSelection(api)
-}
 
 class ExperimentSelection(api: ExperimentApi) {
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -20,6 +16,7 @@ class ExperimentSelection(api: ExperimentApi) {
 
   val date = Var("")
   val experiment = Var("")
+  val dataSource = Var("")
 
   val experimentId = Rx {
     if (experiment().nonEmpty) Some(ExperimentId(experiment()))
@@ -34,33 +31,50 @@ class ExperimentSelection(api: ExperimentApi) {
     }
   }
 
+  val dataSourceId = Rx {
+    experimentRunId().flatMap {
+      id =>
+        if (dataSource().nonEmpty) Some(DataSourceId(id.experiment, id.date, dataSource()))
+        else None
+    }
+  }
+
   // fetch experiments immediately
   api.experiments().onSuccess {case e => es() = e}
 
-  var datesUpdates = 0
+  private[this] val datesId = new Counter
   Obs(experimentId) {
-    datesUpdates += 1; val c = datesUpdates
+    val c = datesId.increment()
     ds() = List.empty
 
     experimentId().foreach {
       // TODO: how to handle failure?
       api.dates(_).onSuccess { case d =>
         // Only update if this is the latest change
-        if (c == datesUpdates) ds() = d
+        if (datesId.isCurrent(c)) ds() = d
       }
     }
   }
 
-  var sourcesUpdates = 0
+  private[this] val sourcesId = new Counter
   Obs(experimentRunId) {
-    sourcesUpdates += 1; val c = sourcesUpdates
+    val c = sourcesId.increment()
     dss() = List.empty
 
     experimentRunId().foreach {
       api.dataSources(_).onSuccess { case s =>
         // Only update if this is the latest change
-        if (c == datesUpdates) dss() = s
+        if (sourcesId.isCurrent(c)) dss() = s
       }
     }
+  }
+
+  private class Counter {
+    private[this] var counter = 0
+    def increment(): Int = {
+      counter += 1; counter
+    }
+    def isCurrent(value: Int) = value == counter
+
   }
 }

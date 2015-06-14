@@ -1,26 +1,18 @@
 package com.oomagnitude
 
-import com.oomagnitude.api.{ExperimentRunId, ExperimentId, DataSourceFetchParams, DataSourceId}
+import com.oomagnitude.api.{DataSourceId, ExperimentId, ExperimentRunId}
 import org.scalajs.dom
 
 object Uris {
   def webSocketAddress: String = {
     val wsProtocol = if (dom.document.location.protocol == "https:") "wss" else "ws"
-
     s"$wsProtocol://${dom.document.location.host}"
   }
 
-  def dataSourcePath(id: DataSourceId, params: DataSourceFetchParams): String = {
-    // TODO: find suitable URI construction library with safe encoding
-    s"/api/data/${id.experiment}/${id.date}/${id.name}?" +
-      s"initialBatchSize=${params.initialBatchSize}" +
-      (if (params.frequencySeconds.nonEmpty) s"&dataPointFrequencySeconds=${params.frequencySeconds.get}" else "") +
-      (if (params.resolution.nonEmpty) s"&timestepResolution=${params.resolution.get}" else "")
-  }
+  // TODO: find suitable URI construction library with safe encoding
+  def dataSourcePath(id: DataSourceId) = s"/api/data/${id.experiment}/${id.date}/${id.name}"
 
-  def dataSourceUrl(id: DataSourceId, params: DataSourceFetchParams) : String = {
-    webSocketAddress + dataSourcePath(id, params)
-  }
+  def dataSourceUrl(id: DataSourceId) = webSocketAddress + dataSourcePath(id)
 
   val experimentsUrl = "/api/experiments"
 

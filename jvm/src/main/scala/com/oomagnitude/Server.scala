@@ -1,7 +1,7 @@
 package com.oomagnitude
 
 import java.io.File
-import java.nio.file.Paths
+import java.nio.file.{Path, Paths}
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
@@ -11,8 +11,8 @@ import akka.http.scaladsl.server.Directives
 import akka.stream.FlowMaterializer
 import akka.stream.scaladsl.Flow
 import akka.stream.stage.{Context, PushStage, SyncDirective, TerminationDirective}
-import com.oomagnitude.api.DataSourceFetchParams
 import com.oomagnitude.pages.Page
+import com.oomagnitude.streams.{FileStreamActor, Flows}
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
 import scala.concurrent.ExecutionContextExecutor
@@ -47,16 +47,13 @@ class Server(implicit fm: FlowMaterializer, system: ActorSystem, executor: Execu
       get {
       /* START PAGE */
       pathSingleSlash {
-        getFromResource("web/index.html")
+        complete{
+          HttpEntity(
+            MediaTypes.`text/html`,
+            "<!DOCTYPE html>\n" + Page.Skeleton.render
+          )
+        }
       } ~
-        path("scalarx") {
-          complete{
-            HttpEntity(
-              MediaTypes.`text/html`,
-              "<!DOCTYPE html>\n" + Page.Skeleton.render
-            )
-          }
-        } ~
         // Scala-JS puts them in the root of the resource directory per default,
         // so that's where we pick them up
         pathPrefix("js") {
@@ -75,12 +72,10 @@ class Server(implicit fm: FlowMaterializer, system: ActorSystem, executor: Execu
           }
         } ~
         pathPrefix("api") {
-          path("data" / Segment / Segment / Segment) { (experimentName, date, dataSource) =>
-            parameters('initialBatchSize.as[Int], 'timestepResolution.as[Option[Int]],
-              'dataPointFrequencySeconds.as[Option[Long]]).as(DataSourceFetchParams) { params =>
-              val path = ResultsPath.resolve(experimentName).resolve(date).resolve("json").resolve(dataSource)
-              handleWebsocketMessages(Handlers.streamFile(path, params).via(reportErrorsFlow))
-            }
+          path("data" / Segment / Segment / Segment) {(experimentName, date, dataSource) =>
+            val path: Path = ResultsPath.resolve(experimentName).resolve(date).resolve("json").resolve(dataSource)
+            val fileStreamActor = system.actorOf(FileStreamActor.props(path))
+            handleWebsocketMessages(Flows.dynamicDataStreamFlow(fileStreamActor, bufferSize = 100).via(reportErrorsFlow))
           } ~
           path("experiments" / Segment / Segment) { (experimentName, date) =>
             complete {
