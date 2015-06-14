@@ -2,16 +2,16 @@ package com.oomagnitude.rx.view
 
 import com.oomagnitude.api.DataSourceId
 import com.oomagnitude.rx.model.ExperimentSelection
-import combobox.Combobox
+import jquery.JQueryExt
 import org.scalajs.dom
 import org.scalajs.dom.html
-import org.scalajs.dom.raw.{Event, MouseEvent}
+import org.scalajs.dom.raw.MouseEvent
 import org.scalajs.jquery._
 import rx._
 
+import scala.language.implicitConversions
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
-import language.implicitConversions
 
 object Templates {
   import com.oomagnitude.rx.Rxs._
@@ -19,7 +19,11 @@ object Templates {
   object bootstrap {
     def row = div(cls:="row")
 
+    def col1 = div(cls:="col-lg-1")
+
     def col2 = div(cls:="col-lg-2")
+
+    def col3 = div(cls:="col-lg-3")
 
     def col10 = div(cls:="col-lg-10")
 
@@ -68,7 +72,7 @@ object Templates {
         choices.asFrags({ parent =>
           // Reset the selected item in this list
           selectedVar() = ""
-          Combobox.refresh(jQuery(parent))
+          JQueryExt.refresh(jQuery(parent))
         })
       ).render
 

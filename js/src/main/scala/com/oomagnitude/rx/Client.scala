@@ -4,7 +4,7 @@ import com.oomagnitude.rx.api.RemoteExperimentApi
 import com.oomagnitude.rx.model.{ChartData, DataSourceSelection, ExperimentSelection}
 import com.oomagnitude.rx.view.Charts.Line
 import com.oomagnitude.rx.view.{Chart, Templates}
-import combobox.Combobox
+import jquery.JQueryExt
 import org.scalajs.dom.html
 import org.scalajs.jquery._
 import rx._
@@ -40,7 +40,7 @@ object Client {
         bootstrap.row(chartContainers.asFrags())
       ).render)
 
-    Combobox.refresh(jQuery(".combobox"))
+    JQueryExt.refresh(jQuery(".combobox"))
   }
 
 }

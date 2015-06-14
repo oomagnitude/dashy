@@ -36,9 +36,14 @@ class Chart(val chartType: ChartType, val data: ChartData, removeChart: (String)
       data.timestepResolution() = resolutionInput.value.toInt
     }
 
-    bs.formInline(bs.btnGroup(Dynamic.pauseButton(data.paused)), bs.formGroup(label("refresh millis"),
-      frequencyInput), bs.formGroup(label("seek to"),
-      seekInput), bs.formGroup(label("resolution"), resolutionInput)).render
+    bs.formHorizontal(bs.formGroup(
+      bs.col1(bs.btnGroup(Dynamic.pauseButton(data.paused))),
+      bs.col2(label("refresh millis")),
+      bs.col2(frequencyInput),
+      bs.col1(label("seek to")),
+      bs.col2(seekInput),
+      bs.col1(label("resolution")),
+      bs.col2(resolutionInput))).render
   }
 
   private[this] val chartElement = bootstrap.panelBody.render
