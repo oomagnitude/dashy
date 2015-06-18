@@ -27,16 +27,18 @@ class FileStreamActor(path: Path, bufferSize: Int, ec: ExecutionContext) extends
   var dataPointFrequency = 100.milliseconds
   var reader = open()
   var cancellable: Option[Cancellable] = Some(schedule)
-  var mostRecentDataPoint = DataPoint.zero
+  var currentSample = DataPoint.zero
+  var currentDataPoint = currentSample
   var timestepResolution = 1
   var paused = false
+  var nextDataPoint: () => Unit = sample
 
   private def open() = {
     new BufferedReader(new FileReader(path.toFile), bufferSize)
   }
 
   private def close() = {
-    mostRecentDataPoint = DataPoint.zero
+    currentSample = DataPoint.zero
     reader.close()
   }
 
@@ -67,15 +69,27 @@ class FileStreamActor(path: Path, bufferSize: Int, ec: ExecutionContext) extends
 
   private def schedule = {
     context.system.scheduler.schedule(initialDelay = 0.seconds, interval = dataPointFrequency) {
-      if (subscriber.nonEmpty) {
-        seek(mostRecentDataPoint.timestep + timestepResolution)
-        subscriber.get ! mostRecentDataPoint
+      subscriber.foreach { sub =>
+        nextDataPoint()
+        sub ! currentDataPoint
       }
     }
   }
 
+  private def rate(): Unit = {
+    val first = currentSample
+    seek(currentSample.timestep + timestepResolution)
+    val slope = (currentSample.value - first.value) / (currentSample.timestep - first.timestep).toDouble
+    currentDataPoint =  DataPoint(timestep = currentSample.timestep, value = slope)
+  }
+
+  private def sample(): Unit = {
+    seek(currentSample.timestep + timestepResolution)
+    currentDataPoint = currentSample
+  }
+
   private def seek(timestep: Int): Unit = {
-    if (timestep < mostRecentDataPoint.timestep) {
+    if (timestep < currentSample.timestep) {
       // re-open the file (start at the beginning)
       reopen()
       seek(timestep)
@@ -84,13 +98,15 @@ class FileStreamActor(path: Path, bufferSize: Int, ec: ExecutionContext) extends
       if (line == null) kill()
       else {
         val dataPoint = upickle.read[DataPoint](line)
-        if (dataPoint.timestep >= timestep) mostRecentDataPoint = dataPoint
+        if (dataPoint.timestep >= timestep) currentSample = dataPoint
         else seek(timestep)
       }
     }
   }
 
   override def receive: Receive = {
+    case Sample => nextDataPoint = sample
+    case Rate => nextDataPoint = rate
     case Pause => pause()
     case Resume => resume()
     case Seek(timestep) => seek(timestep)

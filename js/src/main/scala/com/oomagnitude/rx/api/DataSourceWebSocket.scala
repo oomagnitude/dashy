@@ -31,6 +31,14 @@ class DataSourceWebSocket(dataSource: DataSourceId, handleMessage: MessageEvent 
 
   def frequency(duration: Duration) = send(Frequency(duration.toMillis.toInt))
 
+  def mode(mode: String) = {
+    mode match {
+      case "Sample" => send(Sample)
+      case "Rate" => send(Rate)
+      case _ => // ignore (not supported)
+    }
+  }
+
   private def send(message: StreamControlMessage): Unit = {
     if (webSocket.readyState == Open) {
       webSocket.send(upickle.write(message))

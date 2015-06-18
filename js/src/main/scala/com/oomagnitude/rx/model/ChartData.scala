@@ -39,18 +39,12 @@ class ChartData(val dataSources: List[DataSourceId]) {
   // TODO: reopen ws when seeking after end of data
   val seekLocation = Var(0)
   Obs(seekLocation, skipInitial = true) {
-    doWhilePaused({() =>
-      emptyBuffers()
-      webSockets.foreach(_._2.seek(seekLocation()))
-    })
+    doWhilePaused({() => webSockets.foreach(_._2.seek(seekLocation()))})
   }
 
   val timestepResolution = Var(1)
   Obs(timestepResolution, skipInitial = true) {
-    doWhilePaused({() =>
-      emptyBuffers()
-      webSockets.foreach(_._2.resolution(timestepResolution()))
-    })
+    doWhilePaused({() => webSockets.foreach(_._2.resolution(timestepResolution()))})
   }
 
   val frequency = Var(1000)
@@ -66,16 +60,20 @@ class ChartData(val dataSources: List[DataSourceId]) {
     }
   }
 
+  val mode = Var("Sample")
+  Obs(mode) {
+    doWhilePaused{() => webSockets.foreach(_._2.mode(mode()))}
+  }
+
   private def emptyBuffers() = buffers.foreach(_._2.data() = List.empty)
 
-
   private def doWhilePaused(action: () => Unit): Unit = {
-    // 1. pause data stream
-    webSockets.foreach(_._2.pause())
-    // 2. do action
-    action()
-    // 3. resume data stream
-    webSockets.foreach(_._2.resume())
-
+    if (paused()) {
+      action(); emptyBuffers()
+    } else {
+      webSockets.foreach(_._2.pause())
+      action(); emptyBuffers()
+      webSockets.foreach(_._2.resume())
+    }
   }
 }

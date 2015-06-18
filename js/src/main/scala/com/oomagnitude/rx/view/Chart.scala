@@ -22,19 +22,14 @@ class Chart(val chartType: ChartType, val data: ChartData, removeChart: (String)
   }
   private[this] val controls = {
     val frequencyInput = input(`type`:="number").render
-    frequencyInput.onchange = {(e: Event) =>
-      data.frequency() = frequencyInput.value.toInt
+    frequencyInput.onchange = {(e: Event) => data.frequency() = frequencyInput.value.toInt
     }
 
     val seekInput = input(`type`:="number").render
-    seekInput.onchange = {(e: Event) =>
-      data.seekLocation() = seekInput.value.toInt
-    }
+    seekInput.onchange = {(e: Event) => data.seekLocation() = seekInput.value.toInt }
 
     val resolutionInput = input(`type`:="number").render
-    resolutionInput.onchange = {(e: Event) =>
-      data.timestepResolution() = resolutionInput.value.toInt
-    }
+    resolutionInput.onchange = {(e: Event) => data.timestepResolution() = resolutionInput.value.toInt }
 
     bs.formHorizontal(bs.formGroup(
       bs.col1(bs.btnGroup(Dynamic.pauseButton(data.paused))),
@@ -43,7 +38,8 @@ class Chart(val chartType: ChartType, val data: ChartData, removeChart: (String)
       bs.col1(label("seek to")),
       bs.col2(seekInput),
       bs.col1(label("resolution")),
-      bs.col2(resolutionInput))).render
+      bs.col2(resolutionInput),
+      bs.col1(Dynamic.selectMenu(Rx{List(("Sample", "Sample"), ("Rate", "Rate"))}, data.mode)))).render
   }
 
   private[this] val chartElement = bootstrap.panelBody.render

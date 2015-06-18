@@ -60,6 +60,11 @@ object Templates {
   
   object Dynamic {
     def combobox(options: Rx[List[(String,String)]], selectedVar: Var[String]): html.Select = {
+      selectMenu(options, selectedVar, Some("combobox form-control"), {parent => JQueryExt.refresh(jQuery(parent))})
+    }
+    
+    def selectMenu(options: Rx[List[(String,String)]], selectedVar: Var[String], selectClasses: Option[String] = None,
+                   onOptionChange: dom.Node => Unit = {n => }): html.Select = {
       val choices = Rx {
         options() match {
           case first :: rest =>
@@ -68,12 +73,8 @@ object Templates {
         }
       }
 
-      val selectTag: html.Select = select(cls:="combobox form-control",
-        choices.asFrags({ parent =>
-          // Reset the selected item in this list
-          selectedVar() = ""
-          JQueryExt.refresh(jQuery(parent))
-        })
+      val selectTag: html.Select = select(cls:=selectClasses.getOrElse(""),
+        choices.asFrags({selectedVar() = ""; onOptionChange(_)})
       ).render
 
       selectTag.onchange = { e: dom.Event => selectedVar() = selectTag.value }
@@ -115,7 +116,8 @@ object Templates {
       ("", "select a date") :: selection.dates().sorted(Ordering.String.reverse).map(id =>
         (id, s"${moment.humanReadableDurationFromNow(id)} (${moment.calendarDate(id)})"))
     }
-    val dataSourceDisplay = Rx{("", "select a data source") :: selection.dataSources().map(id => (id, id.replace(".json", "")))}
+    val dataSourceDisplay = Rx{("", "select a data source") ::
+      selection.dataSources().map(id => (id, id.replace(".json", "")))}
 
     val experimentSelect = combobox(experimentsDisplay, selection.experiment)
     val dateSelect = combobox(datesDisplay, selection.date)
@@ -125,7 +127,8 @@ object Templates {
     val clearButton = bs.btnDefault("Clear", onclick:= {e: MouseEvent => tags() = List.empty}).render
 
     bs.formHorizontal(
-      bs.formGroup(bs.col2(label(cls:="control-label", "find data sources")), bs.col10(bs.formInline(bs.formGroup(experimentSelect, dateSelect, dataSourceSelect)))),
+      bs.formGroup(bs.col2(label(cls:="control-label", "find data sources")),
+        bs.col10(bs.formInline(bs.formGroup(experimentSelect, dateSelect, dataSourceSelect)))),
       bs.formGroup(bs.col2(label(cls:="control-label", "selected data sources")), bs.col10(tagGroup(tags))),
       bs.formGroup(bs.col12(bs.btnGroup(addChartButton, clearButton)))).render
   }
