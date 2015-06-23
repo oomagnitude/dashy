@@ -1,7 +1,7 @@
 package com.oomagnitude.api
 
 object DataPoint {
-  val zero = DataPoint(0,0)
+  def zero[T](implicit z: T) = DataPoint(0, z)
 }
 
 /**
@@ -14,4 +14,4 @@ object DataPoint {
  * @param value
  */
 // TODO: convert original data format to support long timestep (as string)
-case class DataPoint(timestep: Int, value: Double)
+case class DataPoint[T](timestep: Int, value: T)

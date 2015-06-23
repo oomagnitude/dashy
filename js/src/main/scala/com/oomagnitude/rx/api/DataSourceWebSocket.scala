@@ -3,6 +3,7 @@ package com.oomagnitude.rx.api
 import com.oomagnitude.Uris._
 import com.oomagnitude.api.DataSourceId
 import com.oomagnitude.api.StreamControl._
+import org.scalajs.dom.Event
 import org.scalajs.dom.raw.{MessageEvent, WebSocket}
 
 import scala.concurrent.duration.Duration
@@ -14,16 +15,22 @@ object DataSourceWebSocket {
   val Closed = 3 //The connection is closed or couldn't be opened.
 }
 
-class DataSourceWebSocket(dataSource: DataSourceId, handleMessage: MessageEvent => Unit) {
+class DataSourceWebSocket(dataSource: DataSourceId, handleMessage: MessageEvent => Unit, paused: Boolean = false,
+                          afterOpen: Event => Unit = {e => }) {
   import DataSourceWebSocket._
-  private[this] val webSocket = new WebSocket(dataSourceUrl(dataSource))
+  private[this] val webSocket = new WebSocket(dataSourceUrl(dataSource, paused))
   webSocket.onmessage = handleMessage
+  webSocket.onopen = afterOpen
 
   def close() = webSocket.close()
 
   def pause() = send(Pause)
 
   def resume() = send(Resume)
+
+  def next() = send(Next)
+
+  def start() = send(Start)
 
   def seek(timestep: Int) = send(Seek(timestep))
 

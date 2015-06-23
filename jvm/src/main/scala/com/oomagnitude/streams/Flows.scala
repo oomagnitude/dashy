@@ -9,8 +9,9 @@ import akka.stream.io.SynchronousFileSource
 import akka.stream.scaladsl._
 import akka.util.ByteString
 import com.oomagnitude.api.DataPoint
-import com.oomagnitude.api.StreamControl.StreamControlMessage
+import com.oomagnitude.api.StreamControl.{Next, StreamControlMessage}
 import com.oomagnitude.streams.FileStreamActor.Subscribe
+import upickle.Writer
 
 import scala.concurrent.Future
 
@@ -52,14 +53,14 @@ object Flows {
       throw new UnsupportedOperationException(s"message $msg not supported")
   }
 
-  def dataPointToMessage = Flow[DataPoint].map { dataPoint =>
+  def dataPointToMessage[T](implicit w: Writer[DataPoint[T]]) = Flow[DataPoint[T]].map { dataPoint =>
     // TODO: expose or handle exceptions thrown here. Right now they are being swallowed.
     val serialized = upickle.write(dataPoint)
     TextMessage.Strict(serialized)
   }
 
-  def dynamicDataStreamFlow(fileStreamActor: ActorRef, bufferSize: Int): Flow[Message, Message, Any] = {
-    Flow(Source.actorRef[DataPoint](bufferSize, OverflowStrategy.fail)) {
+  def dynamicDataStreamFlow[T](fileStreamActor: ActorRef, bufferSize: Int)(implicit w: Writer[DataPoint[T]]): Flow[Message, Message, Any] = {
+    Flow(Source.actorRef[DataPoint[T]](bufferSize, OverflowStrategy.fail)) {
       implicit builder =>
       { (responseSource) =>
         import FlowGraph.Implicits._

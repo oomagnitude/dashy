@@ -31,7 +31,7 @@ lazy val dash = crossProject.in(file(".")).
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-http-scala-experimental" % "1.0-RC2",
     // TODO: replace with upickle
-      "com.typesafe.akka" %% "akka-http-spray-json-experimental" % "1.0-RC2"//,
+      "com.typesafe.akka" %% "akka-http-spray-json-experimental" % "1.0-RC2"
     )
   )
   .jsSettings(
@@ -39,8 +39,7 @@ lazy val dash = crossProject.in(file(".")).
     libraryDependencies ++= Seq(
       "be.doeraene" %%% "scalajs-jquery" % "0.8.0",
       "org.scala-js" %%% "scalajs-dom" % "0.8.0",
-      "com.lihaoyi" %%% "scalarx" % "0.2.8",
-      "biz.enef" %%% "scalajs-angulate" % "0.2"//,
+      "com.lihaoyi" %%% "scalarx" % "0.2.8"
     ),
     jsDependencies ++= Seq(
       // Makes it possible to run the application from the sbt console (i.e., switches runtime to PhantomJS)

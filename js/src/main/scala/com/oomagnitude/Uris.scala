@@ -12,7 +12,9 @@ object Uris {
   // TODO: find suitable URI construction library with safe encoding
   def dataSourcePath(id: DataSourceId) = s"/api/data/${id.experiment}/${id.date}/${id.name}"
 
-  def dataSourceUrl(id: DataSourceId) = webSocketAddress + dataSourcePath(id)
+  def dataSourceUrl(id: DataSourceId, paused: Boolean) = {
+    webSocketAddress + dataSourcePath(id) + s"?paused=$paused"
+  }
 
   val experimentsUrl = "/api/experiments"
 

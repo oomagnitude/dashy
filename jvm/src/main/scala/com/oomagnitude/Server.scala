@@ -11,6 +11,7 @@ import akka.http.scaladsl.server.Directives
 import akka.stream.FlowMaterializer
 import akka.stream.scaladsl.Flow
 import akka.stream.stage.{Context, PushStage, SyncDirective, TerminationDirective}
+import com.oomagnitude.api.MutualInfos
 import com.oomagnitude.pages.Page
 import com.oomagnitude.streams.{FileStreamActor, Flows}
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
@@ -73,9 +74,17 @@ class Server(implicit fm: FlowMaterializer, system: ActorSystem, executor: Execu
         } ~
         pathPrefix("api") {
           path("data" / Segment / Segment / Segment) {(experimentName, date, dataSource) =>
-            val path: Path = ResultsPath.resolve(experimentName).resolve(date).resolve("json").resolve(dataSource)
-            val fileStreamActor = system.actorOf(FileStreamActor.props(path))
-            handleWebsocketMessages(Flows.dynamicDataStreamFlow(fileStreamActor, bufferSize = 100).via(reportErrorsFlow))
+            parameters('paused.as[Option[Boolean]]) { maybePaused =>
+              val paused = maybePaused.getOrElse(false)
+              val path: Path = ResultsPath.resolve(experimentName).resolve(date).resolve("json").resolve(dataSource)
+              if (dataSource == "mutualInformation.json") {
+                val actor = system.actorOf(FileStreamActor.props(path, paused, MutualInfos.zero))
+                handleWebsocketMessages(Flows.dynamicDataStreamFlow[MutualInfos](actor, bufferSize = 100).via(reportErrorsFlow))
+              } else {
+                val actor = system.actorOf(FileStreamActor.props(path, paused, 0.0))
+                handleWebsocketMessages(Flows.dynamicDataStreamFlow[Double](actor, bufferSize = 100).via(reportErrorsFlow))
+              }
+            }
           } ~
           path("experiments" / Segment / Segment) { (experimentName, date) =>
             complete {

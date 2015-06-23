@@ -4,6 +4,7 @@ import org.scalajs.dom
 import org.scalajs.dom.Node
 import rx._
 
+import scala.concurrent.Future
 import scalatags.JsDom
 import scalatags.JsDom.all._
 
@@ -21,6 +22,14 @@ object Rxs {
         last = newLast
       }
       last
+    }
+  }
+  
+  implicit class RxOptOps[T](item: Rx[Option[T]]) {
+    def flatten(initial: T): Rx[T] = {
+      val flattened = Var(initial)
+      Obs(item) { item().foreach {flattened() = _} }
+      flattened
     }
   }
 
@@ -46,5 +55,38 @@ object Rxs {
     }
   }
 
+  private class Counter {
+    private[this] var count = 0
+    def increment(): Int = {
+      count += 1; count
+    }
+    def isCurrent(value: Int) = value == count
 
+  }
+
+  def fetchOnChange[T,V](observed: Rx[Option[T]], items: Var[List[V]], fetch: T => Future[List[V]]): Unit = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    val counter = new Counter
+    Obs(observed) {
+      val c = counter.increment()
+      items() = List.empty
+
+      observed().foreach {
+        fetch(_).onSuccess { case s =>
+          // Only update if this is the latest change
+          if (counter.isCurrent(c)) items() = s
+        }
+      }
+    }
+  }
+  
+  def conditional[T, V](required: Rx[Option[T]], source: Rx[String], toV: (T, String) => V): Rx[Option[V]] =
+    Rx {
+      required().flatMap {
+        t =>
+          if (source().nonEmpty) Some(toV(t, source()))
+          else None
+      }
+    }
 }

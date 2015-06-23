@@ -34,14 +34,14 @@ object Buffer {
 }
 
 class Buffer[T](signal: Rx[T]) {
-  val data = Var(List.empty[T])
+  val data = Var(Vector.empty[T])
   var size: Option[Int] = None
 
   private[this] val obs = Obs(signal, skipInitial = true) {
-    // prepend new value to the buffer
-    var items = signal() :: data()
+    // append new value to the buffer
+    var items = data() :+ signal()
     // truncate buffer to max size
-    size.foreach(s => items = items.take(s))
+    size.foreach(s => items = items.drop(items.size - s))
     // update the data buffer
     data() = items
   }

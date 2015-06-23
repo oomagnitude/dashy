@@ -1,6 +1,7 @@
 package com.oomagnitude.rx.model
 
 import com.oomagnitude.api.{DataSourceId, ExperimentId, ExperimentRunId}
+import com.oomagnitude.rx.Rxs._
 import com.oomagnitude.rx.api.ExperimentApi
 import rx._
 
@@ -14,67 +15,30 @@ class ExperimentSelection(api: ExperimentApi) {
   val experiments: Rx[List[String]] = es
   val dataSources: Rx[List[String]] = dss
 
-  val date = Var("")
   val experiment = Var("")
+  val date = Var("")
   val dataSource = Var("")
+
+  // clear date field whenever experiment field changes
+  Obs(experiment){date() = ""}
+  // clear data source field whenever date field changes
+  Obs(date){dataSource() = ""}
 
   val experimentId = Rx {
     if (experiment().nonEmpty) Some(ExperimentId(experiment()))
     else None
   }
 
-  val experimentRunId = Rx {
-    experimentId().flatMap {
-      id =>
-        if (date().nonEmpty) Some(ExperimentRunId(id.experiment, date()))
-        else None
-    }
-  }
+  val experimentRunId = conditional(experimentId, date,
+  {(id: ExperimentId, str: String) => ExperimentRunId(id.experiment, str)})
 
-  val dataSourceId = Rx {
-    experimentRunId().flatMap {
-      id =>
-        if (dataSource().nonEmpty) Some(DataSourceId(id.experiment, id.date, dataSource()))
-        else None
-    }
-  }
+  val dataSourceId = conditional(experimentRunId, dataSource,
+    {(id: ExperimentRunId, str: String) => DataSourceId(id.experiment, id.date, str)})
 
   // fetch experiments immediately
   api.experiments().onSuccess {case e => es() = e}
-
-  private[this] val datesId = new Counter
-  Obs(experimentId) {
-    val c = datesId.increment()
-    ds() = List.empty
-
-    experimentId().foreach {
-      // TODO: how to handle failure?
-      api.dates(_).onSuccess { case d =>
-        // Only update if this is the latest change
-        if (datesId.isCurrent(c)) ds() = d
-      }
-    }
-  }
-
-  private[this] val sourcesId = new Counter
-  Obs(experimentRunId) {
-    val c = sourcesId.increment()
-    dss() = List.empty
-
-    experimentRunId().foreach {
-      api.dataSources(_).onSuccess { case s =>
-        // Only update if this is the latest change
-        if (sourcesId.isCurrent(c)) dss() = s
-      }
-    }
-  }
-
-  private class Counter {
-    private[this] var counter = 0
-    def increment(): Int = {
-      counter += 1; counter
-    }
-    def isCurrent(value: Int) = value == counter
-
-  }
+  // fetch dates when experiment ID is selected
+  fetchOnChange(experimentId, ds, api.dates)
+  // fetch data sources when experiment run ID is selected
+  fetchOnChange(experimentRunId, dss, api.dataSources)
 }

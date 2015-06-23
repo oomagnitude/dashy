@@ -7,6 +7,7 @@ import akka.actor._
 import com.oomagnitude.api.DataPoint
 import com.oomagnitude.api.StreamControl._
 import com.oomagnitude.streams.FileStreamActor.Subscribe
+import upickle.Reader
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -14,23 +15,26 @@ import scala.concurrent.duration._
 object FileStreamActor {
   val DefaultBufferSize = 65536
 
-  def props(path: Path)(implicit ec: ExecutionContext) = Props(classOf[FileStreamActor], path, DefaultBufferSize, ec)
+  def props[T](path: Path, paused: Boolean, zero: T)(implicit ec: ExecutionContext, r: Reader[DataPoint[T]]) =
+    Props(classOf[FileStreamActor[T]], path, DefaultBufferSize, paused, zero, ec, r)
 
   case class Subscribe(subscriber: ActorRef)
   object terminated
 }
 
-class FileStreamActor(path: Path, bufferSize: Int, ec: ExecutionContext) extends Actor {
+class FileStreamActor[T](path: Path, bufferSize: Int, initiallyPaused: Boolean, zero: T, ec: ExecutionContext,
+                         r: Reader[DataPoint[T]]) extends Actor {
   implicit val executionContext = ec
+  implicit val dataPointReader = r
 
   var subscriber: Option[ActorRef] = None
   var dataPointFrequency = 100.milliseconds
   var reader = open()
-  var cancellable: Option[Cancellable] = Some(schedule)
-  var currentSample = DataPoint.zero
+  var paused = initiallyPaused
+  var cancellable: Option[Cancellable] = if (paused) None else Some(schedule)
+  var currentSample = DataPoint.zero(zero)
   var currentDataPoint = currentSample
   var timestepResolution = 1
-  var paused = false
   var nextDataPoint: () => Unit = sample
 
   private def open() = {
@@ -38,7 +42,7 @@ class FileStreamActor(path: Path, bufferSize: Int, ec: ExecutionContext) extends
   }
 
   private def close() = {
-    currentSample = DataPoint.zero
+    currentSample = DataPoint.zero(zero)
     reader.close()
   }
 
@@ -68,20 +72,23 @@ class FileStreamActor(path: Path, bufferSize: Int, ec: ExecutionContext) extends
   }
 
   private def schedule = {
-    context.system.scheduler.schedule(initialDelay = 0.seconds, interval = dataPointFrequency) {
-      subscriber.foreach { sub =>
-        nextDataPoint()
-        sub ! currentDataPoint
-      }
+    context.system.scheduler.schedule(initialDelay = 0.seconds, interval = dataPointFrequency) {next()}
+  }
+
+  private def next(): Unit = {
+    subscriber.foreach { sub =>
+      nextDataPoint()
+      sub ! currentDataPoint
     }
   }
 
-  private def rate(): Unit = {
-    val first = currentSample
-    seek(currentSample.timestep + timestepResolution)
-    val slope = (currentSample.value - first.value) / (currentSample.timestep - first.timestep).toDouble
-    currentDataPoint =  DataPoint(timestep = currentSample.timestep, value = slope)
-  }
+  // TODO: fixme
+//  private def rate(): Unit = {
+//    val first = currentSample
+//    seek(currentSample.timestep + timestepResolution)
+//    val slope = (currentSample.value - first.value) / (currentSample.timestep - first.timestep).toDouble
+//    currentDataPoint =  DataPoint(timestep = currentSample.timestep, value = slope)
+//  }
 
   private def sample(): Unit = {
     seek(currentSample.timestep + timestepResolution)
@@ -97,7 +104,7 @@ class FileStreamActor(path: Path, bufferSize: Int, ec: ExecutionContext) extends
       val line = reader.readLine()
       if (line == null) kill()
       else {
-        val dataPoint = upickle.read[DataPoint](line)
+        val dataPoint = upickle.read[DataPoint[T]](line)
         if (dataPoint.timestep >= timestep) currentSample = dataPoint
         else seek(timestep)
       }
@@ -105,12 +112,18 @@ class FileStreamActor(path: Path, bufferSize: Int, ec: ExecutionContext) extends
   }
 
   override def receive: Receive = {
-    case Sample => nextDataPoint = sample
-    case Rate => nextDataPoint = rate
-    case Pause => pause()
-    case Resume => resume()
-    case Seek(timestep) => seek(timestep)
-
+    case Sample =>
+      nextDataPoint = sample
+    case Rate =>
+      //nextDataPoint = rate
+    case Pause =>
+      pause()
+    case Resume =>
+      resume()
+    case Next =>
+      next()
+    case Seek(timestep) =>
+      seek(timestep)
     case Resolution(interval) =>
       timestepResolution = interval
     case Frequency(duration: Int) =>
