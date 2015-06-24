@@ -1,6 +1,6 @@
 package com.oomagnitude.view
 
-import com.oomagnitude.rx.model.ChartData
+import com.oomagnitude.model.ChartData
 import org.scalajs.dom.raw.HTMLElement
 import rx._
 

@@ -33,11 +33,11 @@ object D3 {
 
   object forceGraph {
     case class Node(name: String, group: Int) {
-      def asJs = js.Dynamic.literal(name = name, group = group)
+      def toJs = js.Dynamic.literal(name = name, group = group)
     }
 
     case class Link(source: Int, target: Int, value: Double) {
-      def asJs = js.Dynamic.literal(source = source, target = target, value = value)
+      def toJs = js.Dynamic.literal(source = source, target = target, value = value)
     }
 
     case class Graph(nodes: List[Node], links: List[Link])
@@ -67,8 +67,8 @@ object D3 {
       Obs(data, skipInitial = true) {
         val graph: Graph = data()
         val colorGradient = colorScale(graph.nodes, GreenGradient){(d: Node) => d.group}
-        val nodes = graph.nodes.toJSArray.map(_.asJs)
-        val links = graph.links.toJSArray.map(_.asJs)
+        val nodes = graph.nodes.toJSArray.map(_.toJs)
+        val links = graph.links.toJSArray.map(_.toJs)
 
         force
           .nodes(nodes)
@@ -89,9 +89,6 @@ object D3 {
           .on("mouseover", tip.show)
           .on("mouseout", tip.hide)
           .call(force.drag)
-
-//        node.append("title")
-//          .text({ d: js.Dynamic => s"${d.name} (${d.group})" })
 
         force.on("tick", { () =>
           link.attr("x1", { d: js.Dynamic => d.source.x })

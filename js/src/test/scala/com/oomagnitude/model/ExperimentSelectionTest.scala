@@ -1,4 +1,4 @@
-package com.oomagnitude.rx.model
+package com.oomagnitude.model
 
 import com.oomagnitude.api.{ExperimentId, ExperimentRunId}
 import com.oomagnitude.rx.api.DummyExperimentApi

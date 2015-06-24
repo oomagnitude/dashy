@@ -1,4 +1,4 @@
-package com.oomagnitude.rx.model
+package com.oomagnitude.model
 
 import com.oomagnitude.api.{DataSourceId, ExperimentId, ExperimentRunId}
 import com.oomagnitude.rx.Rxs._
@@ -41,4 +41,6 @@ class ExperimentSelection(api: ExperimentApi) {
   fetchOnChange(experimentId, ds, api.dates)
   // fetch data sources when experiment run ID is selected
   fetchOnChange(experimentRunId, dss, api.dataSources)
+
+  def clear(): Unit = experiment() = ""
 }

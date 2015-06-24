@@ -9,8 +9,6 @@ import akka.http.scaladsl.marshalling.ToResponseMarshallable._
 import akka.http.scaladsl.model.{HttpEntity, MediaTypes}
 import akka.http.scaladsl.server.Directives
 import akka.stream.FlowMaterializer
-import akka.stream.scaladsl.Flow
-import akka.stream.stage.{Context, PushStage, SyncDirective, TerminationDirective}
 import com.oomagnitude.api.MutualInfos
 import com.oomagnitude.pages.Page
 import com.oomagnitude.streams.{FileStreamActor, Flows}
@@ -41,6 +39,7 @@ trait Protocol extends DefaultJsonProtocol {
 }
 
 class Server(implicit fm: FlowMaterializer, system: ActorSystem, executor: ExecutionContextExecutor) extends Directives with Protocol {
+  import Flows._
   import Server._
 
   def route =
@@ -108,17 +107,5 @@ class Server(implicit fm: FlowMaterializer, system: ActorSystem, executor: Execu
         getFromResourceDirectory("web")
     }
     }
-
-  def reportErrorsFlow[T]: Flow[T, T, Unit] =
-    Flow[T]
-      .transform(() ⇒ new PushStage[T, T] {
-      def onPush(elem: T, ctx: Context[T]): SyncDirective = ctx.push(elem)
-
-      override def onUpstreamFailure(cause: Throwable, ctx: Context[T]): TerminationDirective = {
-        println(s"WS stream failed with $cause")
-        super.onUpstreamFailure(cause, ctx)
-      }
-    })
-
 }
 

@@ -1,4 +1,4 @@
-package com.oomagnitude.rx.model
+package com.oomagnitude.model
 
 import com.oomagnitude.api.{DataPoint, DataSourceId}
 import com.oomagnitude.rx.CallbackRx
@@ -9,7 +9,10 @@ import upickle.Reader
 
 import scala.concurrent.duration._
 
-class ChartData[T](val dataSources: List[DataSourceId], zero: T, initiallyPaused: Boolean = false,
+class ChartData[T](val title: Option[String],
+                   val dataSources: List[DataSourceId],
+                   zero: T,
+                   initiallyPaused: Boolean = false,
                    afterOpen: ChartData[T] => Unit = {d: ChartData[T] =>})(implicit reader: Reader[DataPoint[T]]) {
   private[this] val rxs = dataSources.map {
     (_, new CallbackRx({e: MessageEvent => upickle.read[DataPoint[T]](e.data.toString)}, DataPoint.zero(zero)))

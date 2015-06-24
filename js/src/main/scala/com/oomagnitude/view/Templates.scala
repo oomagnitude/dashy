@@ -1,10 +1,8 @@
 package com.oomagnitude.view
 
-import jquery.JQueryExt
 import org.scalajs.dom
 import org.scalajs.dom.html
 import org.scalajs.dom.raw.{Event, MouseEvent}
-import org.scalajs.jquery._
 import rx._
 
 import scala.language.implicitConversions
@@ -14,10 +12,6 @@ import scalatags.JsDom.all._
 object Templates {
   import com.oomagnitude.rx.Rxs._
   
-  def combobox(options: Rx[List[(String,String)]], selectedVar: Var[String]): html.Select = {
-    selectMenu(options, selectedVar, Some("combobox form-control"), {parent => JQueryExt.refresh(jQuery(parent))})
-  }
-
   def selectMenu(options: Rx[List[(String,String)]], selectedVar: Var[String], classes: Option[String] = None,
                  optionsChanged: dom.Node => Unit = {n => }): html.Select = {
     // TODO: make first one selected
@@ -26,9 +20,8 @@ object Templates {
     val selectTag = select(group.elements.asFrags(optionsChanged)).render
 
     classes.foreach(selectTag.setAttribute("class", _))
-
     selectTag.onchange = { e: dom.Event => selectedVar() = selectTag.value }
-
+    Obs(selectedVar){selectTag.value = selectedVar()}
     selectTag
   }
 

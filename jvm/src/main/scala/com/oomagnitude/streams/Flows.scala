@@ -7,9 +7,10 @@ import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.stream.OverflowStrategy
 import akka.stream.io.SynchronousFileSource
 import akka.stream.scaladsl._
+import akka.stream.stage.{Context, PushStage, SyncDirective, TerminationDirective}
 import akka.util.ByteString
 import com.oomagnitude.api.DataPoint
-import com.oomagnitude.api.StreamControl.{Next, StreamControlMessage}
+import com.oomagnitude.api.StreamControl.StreamControlMessage
 import com.oomagnitude.streams.FileStreamActor.Subscribe
 import upickle.Writer
 
@@ -22,6 +23,17 @@ object Flows {
   def lineByLineFile(path: Path): Source[ByteString, Future[Long]]#Repr[String, Future[Long]] = {
     SynchronousFileSource(path.toFile).transform(() => Stages.parseLines("\n"))
   }
+
+  def reportErrorsFlow[T]: Flow[T, T, Unit] =
+    Flow[T]
+      .transform(() ⇒ new PushStage[T, T] {
+      def onPush(elem: T, ctx: Context[T]): SyncDirective = ctx.push(elem)
+
+      override def onUpstreamFailure(cause: Throwable, ctx: Context[T]): TerminationDirective = {
+        println(s"WS stream failed with $cause")
+        super.onUpstreamFailure(cause, ctx)
+      }
+    })
 
   /**
    * Ignores all incoming messages from the client. Grafts a server-side message source into the flow. All messages

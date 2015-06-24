@@ -17,7 +17,9 @@ package object view {
 
   val charts = Charts
 
-  val experimentForm = ExperimentForm
+  val chartBuilderForm = ChartBuilderForm
 
   val md3 = D3
+
+  val typeahead = Typeahead
 }
