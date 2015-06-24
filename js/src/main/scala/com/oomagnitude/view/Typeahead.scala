@@ -12,9 +12,6 @@ import scalatags.JsDom.all._
 
 object Typeahead {
   val Bloodhound = js.Dynamic.global.Bloodhound
-  case class SelectOption(name: String, value: String) {
-    def toJs = l(name = name, value = value)
-  }
 
   def apply(placeHolder: String, options: Rx[List[SelectOption]], selectedVar: Var[String]): html.Element = {
     val tInput = input(cls:="typeahead", style:= "max-height: 150px; overflow-y: auto;", `type`:="text", placeholder:=placeHolder).render

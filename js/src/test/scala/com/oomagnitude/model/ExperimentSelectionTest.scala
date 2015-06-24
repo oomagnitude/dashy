@@ -1,7 +1,7 @@
 package com.oomagnitude.model
 
 import com.oomagnitude.api.{ExperimentId, ExperimentRunId}
-import com.oomagnitude.rx.api.DummyExperimentApi
+import com.oomagnitude.api.DummyExperimentApi
 import rx.ops.DomScheduler
 import utest._
 

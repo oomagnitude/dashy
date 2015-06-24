@@ -2,7 +2,7 @@ package com.oomagnitude.model
 
 import com.oomagnitude.api.{DataSourceId, ExperimentId, ExperimentRunId}
 import com.oomagnitude.rx.Rxs._
-import com.oomagnitude.rx.api.ExperimentApi
+import com.oomagnitude.api.ExperimentApi
 import rx._
 
 class ExperimentSelection(api: ExperimentApi) {

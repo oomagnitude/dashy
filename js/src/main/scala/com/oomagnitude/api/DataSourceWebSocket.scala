@@ -1,8 +1,7 @@
-package com.oomagnitude.rx.api
+package com.oomagnitude.api
 
-import com.oomagnitude.Uris._
-import com.oomagnitude.api.DataSourceId
 import com.oomagnitude.api.StreamControl._
+import com.oomagnitude.api.Uris._
 import org.scalajs.dom.Event
 import org.scalajs.dom.raw.{MessageEvent, WebSocket}
 

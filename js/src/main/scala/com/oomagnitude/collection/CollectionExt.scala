@@ -1,4 +1,4 @@
-package com.oomagnitude
+package com.oomagnitude.collection
 
 object CollectionExt {
   implicit class CollectionOps[T](ts: Iterable[T]) {

@@ -1,6 +1,5 @@
-package com.oomagnitude
+package com.oomagnitude.api
 
-import com.oomagnitude.api.{DataSourceId, ExperimentId, ExperimentRunId}
 import org.scalajs.dom
 
 object Uris {

@@ -1,7 +1,6 @@
 package com.oomagnitude.rx
 
 import org.scalajs.dom
-import org.scalajs.dom.Node
 import rx._
 
 import scala.concurrent.Future
@@ -35,7 +34,7 @@ object Rxs {
 
   implicit class RxListOps[T](items: Rx[List[T]])(implicit tToFrag: T => Frag) {
 
-    def asFrags(postUpdate: Node => Unit = {n =>}): Frag = {
+    def asFrags: Frag = {
       def children = {
         // insert dummy div tag so that the parent is always accessible
         if (items().isEmpty) List(div().render)
@@ -49,7 +48,6 @@ object Rxs {
         last.foreach(parent.removeChild)
         newLast.foreach(parent.appendChild)
         last = newLast
-        postUpdate(parent)
       }
       last
     }
@@ -73,9 +71,9 @@ object Rxs {
       items() = List.empty
 
       observed().foreach {
-        fetch(_).onSuccess { case s =>
+        fetch(_).onSuccess { case r =>
           // Only update if this is the latest change
-          if (counter.isCurrent(c)) items() = s
+          if (counter.isCurrent(c)) items() = r
         }
       }
     }

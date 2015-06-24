@@ -3,7 +3,7 @@ package com.oomagnitude.pages
 import scalatags.Text.all._
 
 object Page {
-  val Boot = "com.oomagnitude.rx.Client().main(document.getElementById('contents'))"
+  val Boot = "com.oomagnitude.pages.ChartBuilder().main(document.getElementById('contents'))"
 
   val Skeleton =
     html(

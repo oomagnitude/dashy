@@ -2,7 +2,7 @@ package com.oomagnitude.model
 
 import com.oomagnitude.api.{DataPoint, DataSourceId}
 import com.oomagnitude.rx.CallbackRx
-import com.oomagnitude.rx.api.DataSourceWebSocket
+import com.oomagnitude.api.DataSourceWebSocket
 import org.scalajs.dom.raw.MessageEvent
 import rx._
 import upickle.Reader

@@ -1,6 +1,5 @@
-package com.oomagnitude.rx.api
+package com.oomagnitude.api
 
-import com.oomagnitude.api.{ExperimentId, ExperimentRunId}
 import org.scalajs.dom.ext.Ajax
 
 import scala.concurrent.Future
@@ -27,8 +26,9 @@ class DummyExperimentApi(experimentList: List[String], dateList: List[String],
 }
 
 object RemoteExperimentApi extends ExperimentApi {
+  import Uris._
+
   import scala.concurrent.ExecutionContext.Implicits.global
-  import com.oomagnitude.Uris._
 
   override def experiments(): Future[List[String]] =
     Ajax.get(experimentsUrl).map {

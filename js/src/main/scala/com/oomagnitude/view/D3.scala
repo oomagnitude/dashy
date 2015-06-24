@@ -1,6 +1,7 @@
 package com.oomagnitude.view
 
-import com.oomagnitude.CollectionExt._
+import com.oomagnitude.collection.CollectionExt
+import CollectionExt._
 import org.scalajs.dom.html
 import rx._
 

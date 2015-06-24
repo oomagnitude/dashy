@@ -12,12 +12,10 @@ import scalatags.JsDom.all._
 object Templates {
   import com.oomagnitude.rx.Rxs._
   
-  def selectMenu(options: Rx[List[(String,String)]], selectedVar: Var[String], classes: Option[String] = None,
-                 optionsChanged: dom.Node => Unit = {n => }): html.Select = {
+  def selectMenu(options: Rx[List[SelectOption]], selectedVar: Var[String], classes: Option[String] = None): html.Select = {
     // TODO: make first one selected
-    val group = new RxListElementGroup[(String, String)](options, {(pair, _) => option(value:=pair._1, pair._2).render})
-
-    val selectTag = select(group.elements.asFrags(optionsChanged)).render
+    val optionTags = Rx{options().map(opt => option(value:=opt.value, opt.name))}
+    val selectTag = select(optionTags.asFrags).render
 
     classes.foreach(selectTag.setAttribute("class", _))
     selectTag.onchange = { e: dom.Event => selectedVar() = selectTag.value }
@@ -59,9 +57,9 @@ object Templates {
     element
   }
 
-  def ulist(items: Rx[List[String]]): html.UList = ul(toListItems(items).asFrags()).render
+  def ulist(items: Rx[List[String]]): html.UList = ul(toListItems(items).asFrags).render
 
-  def olist(items: Rx[List[String]]): html.OList = ol(toListItems(items).asFrags()).render
+  def olist(items: Rx[List[String]]): html.OList = ol(toListItems(items).asFrags).render
 
   def toListItems(items: Rx[List[String]]): Rx[List[TypedTag[html.LI]]] = Rx {items().map(li(_))}
 
@@ -70,15 +68,15 @@ object Templates {
     div(cls:="row", span(cls:="tag label label-info", label, anchor)).render
   }
 
-  def radio(radioName: String, options: List[(String, String)], checkedValue: Var[String]): html.Element = {
+  def radio(radioName: String, options: List[SelectOption], checkedValue: Var[String]): html.Element = {
     var first = true
     val optionTags: List[TypedTag[_]] = options.map {
-      case (l, v) =>
-        var inp = input(`type`:="radio", name:=radioName, id:=l, value:=v,
-          onchange:= {e: dom.Event => checkedValue() = v})
+      opt =>
+        var inp = input(`type`:="radio", name:=radioName, id:=opt.name, value:=opt.value,
+          onchange:= {e: dom.Event => checkedValue() = opt.value})
         if (first) inp = inp(checked:="checked")
         first = false
-        bs.formGroup(bs.col12(inp, label(`for`:=l, l)))
+        bs.formGroup(bs.col12(inp, label(`for`:=opt.name, opt.name)))
     }
     form(optionTags: _*).render
   }
