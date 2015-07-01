@@ -1,32 +1,22 @@
 package com.oomagnitude
 
-import java.io.File
 import java.nio.file.{Path, Paths}
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.marshalling.ToResponseMarshallable._
 import akka.http.scaladsl.model.{HttpEntity, MediaTypes}
 import akka.http.scaladsl.server.Directives
 import akka.stream.FlowMaterializer
-import com.oomagnitude.api.MutualInfos
+import com.oomagnitude.actors.FileStreamActor
+import com.oomagnitude.api.{DataSourceId, ExperimentId, ExperimentRunId}
+import com.oomagnitude.metrics.model.ext.MutualInfos
 import com.oomagnitude.pages.Page
-import com.oomagnitude.streams.{FileStreamActor, Flows}
-import spray.json.{DefaultJsonProtocol, RootJsonFormat}
+import com.oomagnitude.server.Accessor
+import com.oomagnitude.streams.Flows
 
 import scala.concurrent.ExecutionContextExecutor
 
 object Server {
-  def pathForProperty(propertyName: String, default: String = "."): String = {
-    val path =
-      sys.env.getOrElse(propertyName, sys.props.getOrElse(propertyName, default))
-    new File(path).getAbsolutePath
-  }
-
-  val OutputDataPath = Paths.get(pathForProperty("CLA_EXP"))
-
-  val ResultsPath = OutputDataPath.resolve("results")
-
   val JvmRoot = Paths.get(".")
   val JsRoot = JvmRoot.resolve("..").resolve("js").resolve("target").resolve("scala-2.11")
   val JsResources = JsRoot.resolve("classes").resolve("js")
@@ -34,13 +24,10 @@ object Server {
   val CssOutput = JsRoot.resolve("classes").resolve("css")
 }
 
-trait Protocol extends DefaultJsonProtocol {
-  implicit val sSFormat: RootJsonFormat[Seq[String]] = seqFormat
-}
-
-class Server(implicit fm: FlowMaterializer, system: ActorSystem, executor: ExecutionContextExecutor) extends Directives with Protocol {
+class Server(accessor: Accessor)(implicit fm: FlowMaterializer, system: ActorSystem, executor: ExecutionContextExecutor) extends Directives {
   import Flows._
   import Server._
+  import filesystem._
 
   def route =
     logRequestResult("scalajs-dashboard") {
@@ -72,35 +59,37 @@ class Server(implicit fm: FlowMaterializer, system: ActorSystem, executor: Execu
           }
         } ~
         pathPrefix("api") {
-          path("data" / Segment / Segment / Segment) {(experimentName, date, dataSource) =>
+          path("data" / Segment / Segment / Segment) {(experiment, date, dataSource) =>
             parameters('paused.as[Option[Boolean]]) { maybePaused =>
               val paused = maybePaused.getOrElse(false)
-              val path: Path = ResultsPath.resolve(experimentName).resolve(date).resolve("json").resolve(dataSource)
-              if (dataSource == "mutualInformation.json") {
-                val actor = system.actorOf(FileStreamActor.props(path, paused, MutualInfos.zero))
+              val path: Path = DataSourceId(experiment, date, dataSource).toJsonPath
+              if (dataSource == "mutualInformation") {
+                val actor = system.actorOf(FileStreamActor.props[MutualInfos](path, paused))
                 handleWebsocketMessages(Flows.dynamicDataStreamFlow[MutualInfos](actor, bufferSize = 100).via(reportErrorsFlow))
               } else {
-                val actor = system.actorOf(FileStreamActor.props(path, paused, 0.0))
+                val actor = system.actorOf(FileStreamActor.props[Double](path, paused))
                 handleWebsocketMessages(Flows.dynamicDataStreamFlow[Double](actor, bufferSize = 100).via(reportErrorsFlow))
               }
             }
           } ~
-          path("experiments" / Segment / Segment) { (experimentName, date) =>
+          path("experiments" / Segment / Segment) { (experiment, date) =>
             complete {
-              // TODO: how do you handle failure?
-              Handlers.dirListing(ResultsPath.resolve(experimentName).resolve(date).resolve("json"))
+              accessor.metadata(ExperimentRunId(experiment, date)).map(m => upickle.write(m))
             }
           } ~
-          path("experiments" / Segment) { experimentName =>
+          path("experiments" / Segment) { experiment =>
             complete {
-              // TODO: how do you handle failure?
-              Handlers.dirListing(ResultsPath.resolve(experimentName))
+              // TODO: change API to deal with ID case classes directly
+              accessor.experimentRuns(ExperimentId(experiment)).map { ids =>
+                upickle.write(ids.map(_.date))
+              }
             }
           } ~
           path("experiments") {
-            // TODO: async I/O instead of using a future here?
             complete {
-              Handlers.dirListing(ResultsPath)
+              accessor.experiments.map { ids =>
+                upickle.write(ids.map(_.experiment))
+              }
             }
           }
         } ~

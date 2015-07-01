@@ -1,8 +1,8 @@
 package com.oomagnitude.model
 
-import com.oomagnitude.api.{DataPoint, DataSourceId}
+import com.oomagnitude.api.{DataSourceId, DataSourceWebSocket}
+import com.oomagnitude.metrics.model.DataPoint
 import com.oomagnitude.rx.CallbackRx
-import com.oomagnitude.api.DataSourceWebSocket
 import org.scalajs.dom.raw.MessageEvent
 import rx._
 import upickle.Reader

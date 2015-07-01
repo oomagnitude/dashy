@@ -3,6 +3,7 @@ package com.oomagnitude
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorFlowMaterializer
+import com.oomagnitude.filesystem.FilesystemAccessor
 
 import scala.util.{Failure, Success}
 
@@ -15,7 +16,7 @@ object Boot extends App {
   val interface = config.getString("app.interface")
   val port = config.getInt("app.port")
 
-  val service = new Server
+  val service = new Server(new FilesystemAccessor)
 
   val binding = Http().bindAndHandle(service.route, interface, port)
   binding.onComplete {

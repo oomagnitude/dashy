@@ -1,10 +1,10 @@
 package com.oomagnitude.pages
 
-import com.oomagnitude.api.MutualInfos
+import com.oomagnitude.api.RemoteExperimentApi
 import com.oomagnitude.bind.ViewChannel
+import com.oomagnitude.metrics.model.ext.MutualInfos
 import com.oomagnitude.model.{ChartBuilderData, ChartData, ListWithId}
 import com.oomagnitude.rx.Rxs
-import com.oomagnitude.api.RemoteExperimentApi
 import com.oomagnitude.view._
 import org.scalajs.dom.html
 
@@ -41,7 +41,7 @@ object ChartBuilder {
 
     val dataSourceForm = chartBuilderForm(builderData,
       {e =>
-        if (builderData.dataSources.items().size == 1 && builderData.dataSources.items().head.name == "mutualInformation.json") {
+        if (builderData.dataSources.items().size == 1 && builderData.dataSources.items().head.name == "mutualInformation") {
           val data = new ChartData(builderData.title(), builderData.dataSources.items(), MutualInfos.zero, initiallyPaused = true,
             {d: ChartData[MutualInfos] => d.location() = 90000; d.next()})
           forceGraphData.add(data)

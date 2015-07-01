@@ -1,6 +1,7 @@
 package com.oomagnitude.model
 
 import com.oomagnitude.api.{DataSourceId, ExperimentId, ExperimentRunId}
+import com.oomagnitude.metrics.model.MetricMetadata
 import com.oomagnitude.rx.Rxs._
 import com.oomagnitude.api.ExperimentApi
 import rx._
@@ -9,11 +10,11 @@ class ExperimentSelection(api: ExperimentApi) {
   import scala.concurrent.ExecutionContext.Implicits.global
   private[this] val es = Var(List.empty[String])
   private[this] val ds = Var(List.empty[String])
-  private[this] val dss = Var(List.empty[String])
+  private[this] val dss = Var(List.empty[MetricMetadata])
 
   val dates: Rx[List[String]] = ds
   val experiments: Rx[List[String]] = es
-  val dataSources: Rx[List[String]] = dss
+  val dataSources: Rx[List[MetricMetadata]] = dss
 
   val experiment = Var("")
   val date = Var("")

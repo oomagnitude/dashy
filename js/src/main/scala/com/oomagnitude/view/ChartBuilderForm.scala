@@ -17,7 +17,7 @@ object ChartBuilderForm {
     val datesDisplay = Rx {bd.experimentSelection.dates().sorted(Ordering.String.reverse).map(id =>
         SelectOption(s"${moment.humanReadableDurationFromNow(id)} (${moment.calendarDate(id)})", id))
     }
-    val dataSourceDisplay = Rx{bd.experimentSelection.dataSources().map(id => SelectOption(id.replace(".json", ""), id))}
+    val dataSourceDisplay = Rx{bd.experimentSelection.dataSources().map(meta => SelectOption(meta.id.toString, meta.id.toString))}
 
     val experimentSelect = typeahead("select an experiment", experimentsDisplay, bd.experimentSelection.experiment)
     val dateSelect = typeahead("select a date", datesDisplay, bd.experimentSelection.date)

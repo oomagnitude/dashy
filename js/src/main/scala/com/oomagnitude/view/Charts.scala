@@ -1,6 +1,7 @@
 package com.oomagnitude.view
 
-import com.oomagnitude.api.{DataPoint, DataSourceId}
+import com.oomagnitude.api.DataSourceId
+import com.oomagnitude.metrics.model.DataPoint
 import org.scalajs.dom.html
 import rx._
 

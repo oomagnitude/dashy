@@ -4,14 +4,14 @@ import java.nio.file.Path
 
 import akka.actor.ActorRef
 import akka.http.scaladsl.model.ws.{Message, TextMessage}
-import akka.stream.OverflowStrategy
 import akka.stream.io.SynchronousFileSource
 import akka.stream.scaladsl._
 import akka.stream.stage.{Context, PushStage, SyncDirective, TerminationDirective}
+import akka.stream.{OverflowStrategy, UniformFanInShape}
 import akka.util.ByteString
-import com.oomagnitude.api.DataPoint
-import com.oomagnitude.api.StreamControl.StreamControlMessage
-import com.oomagnitude.streams.FileStreamActor.Subscribe
+import com.oomagnitude.actors.{Subscribe, Close}
+import com.oomagnitude.api.StreamControl.{Next, StreamControlMessage}
+import com.oomagnitude.metrics.model.DataPoint
 import upickle.Writer
 
 import scala.concurrent.Future
@@ -84,7 +84,7 @@ object Flows {
 
         // patches in 1. messages from client; 2. subscriber (downstream) that sends messages to client
         val merge = builder.add(Merge[Any](2))
-        val dispatch = builder.add(Sink.actorRef(fileStreamActor, FileStreamActor.terminated))
+        val dispatch = builder.add(Sink.actorRef(fileStreamActor, Close))
 
         // 0. inform dispatch actor of downstream actor that is subscribing
         // 1. send incoming ws messages to the dispatch actor
@@ -102,6 +102,57 @@ object Flows {
     }.mapMaterialized(_ ⇒ ())
   }
 
+//  // 1. make one flow per file actor
+//  def actorSource[T](actorRef: ActorRef)(implicit bufferSize: Int,
+//                                         overflowStrategy: OverflowStrategy = OverflowStrategy.fail): Flow[Any, T, ActorRef] = {
+//    Flow(Source.actorRef[T](bufferSize, overflowStrategy)) {
+//      implicit builder => { (source) =>
+//        import FlowGraph.Implicits._
+//
+//        val merge = builder.add(Merge[Any](2))
+//        val actorSource = builder.add(Sink.actorRef(actorRef, Close))
+//        val input = builder.add(Flow[Any])
+//
+//        // 1. source of flow's materialized value (i.e., the actor source)
+//        // 2. source of incoming messages
+//        // 3. merge #1 and #2 into one stream and direct it to the external actor
+//        builder.matValue ~> Flow[ActorRef].map(Subscribe) ~> merge.in(0)
+//                                                    input ~> merge.in(1)
+//                                                             merge ~> actorSource
+//
+//        (input.inlet, source.outlet)
+//      }
+//    }
+//  }
+//
+//  // 2. the for each flow, the outlets are merged into a map (key is DataSourceId, value is String)
+//  // Merges a bunch of key/value pairs into a single map
+//  def mergeToMap[K, V](numInlets: Int) = {
+//    FlowGraph.partial() { implicit b =>
+//      import FlowGraph.Implicits._
+//
+//      val zips = Vector.fill(numInlets) {
+//        b.add(ZipWith[Map[K, V], (K, V), Map[K, V]] {
+//          case (map, (key, value)) => map + (key -> value)
+//        })
+//      }
+//
+//      val seedFlow = b.add(Flow[Map[K, V]])
+//      Source.repeat(Map.empty[K, V]) ~> seedFlow
+//
+//      val outlet = zips.foldLeft(seedFlow.outlet) {
+//        (mapSource, zip) =>
+//          mapSource ~> zip.in0
+//          zip.out
+//      }
+//
+//      UniformFanInShape(outlet, zips.map(_.in1): _*)
+//    }
+//  }
+//
+//  // 3. map that to the correct data type by deserializing w/ upickle
+//  // 4. attach downstream processing, if needed (e.g., group and map)
+//  // 5. sink to master control actor, which sends the message on its way
 
   /**
    * Throttles all messages passing through it by only allowing no more than one message at each regular interval

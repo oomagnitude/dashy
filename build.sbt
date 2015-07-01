@@ -22,16 +22,15 @@ lazy val dash = crossProject.in(file(".")).
     libraryDependencies ++= Seq(
       "com.lihaoyi" %%% "scalatags" % "0.5.2",
       "com.lihaoyi" %%% "upickle" % "0.2.7",
-      "com.lihaoyi" %%% "utest" % "0.3.0" % "test"
+      "com.lihaoyi" %%% "utest" % "0.3.0" % "test",
+      "com.oomagnitude" %%% "metrics-shared" % "0.1-SNAPSHOT"
     ),
     testFrameworks += new TestFramework("utest.runner.Framework")
   )
   .jvmSettings(
     // Add JVM-specific settings here
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-http-scala-experimental" % "1.0-RC2",
-    // TODO: replace with upickle
-      "com.typesafe.akka" %% "akka-http-spray-json-experimental" % "1.0-RC2"
+      "com.typesafe.akka" %% "akka-http-scala-experimental" % "1.0-RC2"
     )
   )
   .jsSettings(
