@@ -8,7 +8,7 @@ import akka.http.scaladsl.model.{HttpEntity, MediaTypes}
 import akka.http.scaladsl.server.Directives
 import akka.stream.FlowMaterializer
 import com.oomagnitude.api.StreamControl.Resume
-import com.oomagnitude.api.{DataSourceId, ExperimentId, ExperimentRunId}
+import com.oomagnitude.api._
 import com.oomagnitude.dash.server.actors.MultiplexFileController
 import com.oomagnitude.dash.server.actors.MultiplexFileController.{StreamConfig, StreamSource}
 import com.oomagnitude.dash.server.pages.Page
@@ -62,15 +62,15 @@ class Server(accessor: Accessor)(implicit fm: FlowMaterializer, system: ActorSys
         } ~
         pathPrefix("api") {
           path("data") {
-            parameters('paused.as[Option[Boolean]], 'dataSources.as[String]/*, 'dataType.as[Option[String]]*/) {
-              (maybePaused: Option[Boolean], dsJson: String /*, maybeDataType: Option[String]*/) =>
+            parameters('paused.as[Option[Boolean]], 'dataSources.as[String], 'dataType.as[String]) {
+              (maybePaused: Option[Boolean], dsJson: String, typeJson: String) =>
                 val paused = maybePaused.getOrElse(false)
-                val dataType = "Double"//maybeDataType.getOrElse("Double")
+                val dataType = upickle.read[MetricDataType](typeJson)
                 val dataSources = upickle.read[List[DataSourceId]](dsJson)
                 val metadatas = Await.result(accessor.metadata(dataSources), 100.millis)
                 val defaultConfig = StreamConfig(frequencyMillis = 100, resolution = 1)
                 val messageFlow = dataType match {
-                  case "Double" =>
+                  case Number =>
                     // only accept those data sources that can be converted to a Double
                     val numericSources = metadatas.filter(_._2.interpretation.isConvertibleTo[Double])
                     val flows = numericSources.map {
@@ -86,7 +86,7 @@ class Server(accessor: Accessor)(implicit fm: FlowMaterializer, system: ActorSys
                     val actor = system.actorOf(MultiplexFileController.props[DataSourceId, DataPoint[Double]](flows, defaultConfig))
                     if (!paused) actor ! Resume
                     Flows.dynamicDataStreamFlow[Double](actor, bufferSize = 100)
-                  case "MutualInfos" =>
+                  case MutualInfoType =>
                     val mutualInfoSources = metadatas.filter(_._2.interpretation.isConvertibleTo[MutualInfos])
                     val flows = mutualInfoSources.map {
                       case (id, metadata) =>
