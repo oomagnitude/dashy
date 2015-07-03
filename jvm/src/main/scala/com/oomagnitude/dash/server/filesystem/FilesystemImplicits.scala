@@ -1,4 +1,4 @@
-package com.oomagnitude
+package com.oomagnitude.dash.server.filesystem
 
 import java.io.{FilenameFilter, File}
 import java.nio.file.{Path, Paths}
@@ -7,7 +7,7 @@ import com.oomagnitude.api.{DataSourceId, ExperimentRunId, ExperimentId}
 
 import scala.concurrent.{Future, ExecutionContextExecutor}
 
-package object filesystem {
+trait FilesystemImplicits {
   def pathForProperty(propertyName: String, default: String = "."): String = {
     val path =
       sys.env.getOrElse(propertyName, sys.props.getOrElse(propertyName, default))

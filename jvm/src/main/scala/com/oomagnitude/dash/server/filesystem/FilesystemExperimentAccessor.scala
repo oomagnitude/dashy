@@ -1,7 +1,7 @@
-package com.oomagnitude.filesystem
+package com.oomagnitude.dash.server.filesystem
 
 import com.oomagnitude.api.{ExperimentRunId, ExperimentId}
-import com.oomagnitude.server.ExperimentAccessor
+import com.oomagnitude.dash.server.ExperimentAccessor
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -13,7 +13,6 @@ trait FilesystemExperimentAccessor extends ExperimentAccessor {
       case null => Seq.empty[ExperimentId]
       case subdirs => subdirs.filterNot(_.isHidden).filter(_.isDirectory).map(s => ExperimentId(s.getName))
     }
-
   }
 
   override def experimentRuns(id: ExperimentId): Future[Seq[ExperimentRunId]] = {

@@ -1,8 +1,8 @@
-package com.oomagnitude.filesystem
+package com.oomagnitude.dash.server.filesystem
 
 import com.oomagnitude.api.{DataSourceId, ExperimentRunId}
+import com.oomagnitude.dash.server.MetadataAccessor
 import com.oomagnitude.metrics.model.MetricMetadata
-import com.oomagnitude.server.MetadataAccessor
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -14,8 +14,12 @@ trait FilesystemMetadataAccessor extends MetadataAccessor {
     listing.flatMap(getAllContents).map(_.map(json => upickle.read[MetricMetadata](json)))
   }
 
-  override def metadata(dataSources: Iterable[DataSourceId]): Future[Seq[MetricMetadata]] = {
-    val files = dataSources.map(_.toMetaPath.toFile)
-    getAllContents(files).map(_.map(json => upickle.read[MetricMetadata](json)))
+  override def metadata(dataSources: Iterable[DataSourceId]): Future[Seq[(DataSourceId, MetricMetadata)]] = {
+    Future.sequence(dataSources.toSeq.map { id =>
+      Future {
+        val source = io.Source.fromFile(id.toMetaPath.toFile)
+        (id, try upickle.read[MetricMetadata](source.getLines().mkString) finally source.close())
+      }
+    })
   }
 }

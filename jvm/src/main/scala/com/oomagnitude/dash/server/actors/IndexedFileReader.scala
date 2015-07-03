@@ -1,10 +1,10 @@
-package com.oomagnitude.actors
+package com.oomagnitude.dash.server.actors
 
 import java.io.{BufferedReader, FileReader}
 import java.nio.file.Path
 
 import akka.actor.{Actor, ActorLogging, Props}
-import com.oomagnitude.actors.IndexedFileReader._
+import com.oomagnitude.dash.server.actors.IndexedFileReader._
 import com.oomagnitude.api.StreamControl.Seek
 
 object IndexedFileReader {
@@ -68,7 +68,9 @@ class IndexedFileReader(path: Path,
     reader = None
   }
 
-  override def kill(): Unit = close()
+  override def kill(): Unit = {
+    close()
+  }
 
   private def seek(destination: Long): Option[String] = {
     if (reader.isEmpty) open()

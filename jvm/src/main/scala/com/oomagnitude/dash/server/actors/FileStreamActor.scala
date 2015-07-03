@@ -1,10 +1,10 @@
-package com.oomagnitude.actors
-
-import java.nio.file.Path
+package com.oomagnitude.dash.server.actors
 
 import akka.actor._
-import com.oomagnitude.actors.IndexedFileReader.Advance
+import com.oomagnitude.dash.server.actors.IndexedFileReader.Advance
+import com.oomagnitude.api.DataSourceId
 import com.oomagnitude.api.StreamControl._
+import com.oomagnitude.dash.server._
 import com.oomagnitude.metrics.model.DataPoint
 import upickle.Reader
 
@@ -14,11 +14,11 @@ import scala.concurrent.duration._
 object FileStreamActor {
   val DefaultBufferSize = 65536
 
-  def props[T: Reader](path: Path, paused: Boolean)(implicit ec: ExecutionContext) =
-    Props(classOf[FileStreamActor[T]], path, DefaultBufferSize, paused, ec, implicitly[Reader[T]])
+  def props[T: Reader](dataSourceId: DataSourceId, paused: Boolean)(implicit ec: ExecutionContext) =
+    Props(classOf[FileStreamActor[T]], dataSourceId, DefaultBufferSize, paused, ec, implicitly[Reader[T]])
 }
 
-class FileStreamActor[T](path: Path, bufferSize: Int, initiallyPaused: Boolean, ec: ExecutionContext,
+class FileStreamActor[T](dataSourceId: DataSourceId, bufferSize: Int, initiallyPaused: Boolean, ec: ExecutionContext,
                          r: Reader[T]) extends Actor with Subscribable {
   implicit val executionContext = ec
 
@@ -26,7 +26,7 @@ class FileStreamActor[T](path: Path, bufferSize: Int, initiallyPaused: Boolean, 
   var cancellable: Option[Cancellable] = if (initiallyPaused) None else Some(schedule) // top-level actor
   var timestepResolution = 1 // top-level actor (tell it where to seek to)
 
-  val indexedFileReader = context.actorOf(IndexedFileReader.props(path, bufferSize)())
+  val indexedFileReader = context.actorOf(IndexedFileReader.props(dataSourceId.toJsonPath, bufferSize)())
   indexedFileReader ! Subscribe(self)
 
   def paused: Boolean = cancellable.isEmpty

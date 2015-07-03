@@ -1,4 +1,4 @@
-package com.oomagnitude
+package com.oomagnitude.dash.server
 
 import java.nio.file.Path
 

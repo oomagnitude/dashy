@@ -1,4 +1,4 @@
-package com.oomagnitude.actors
+package com.oomagnitude.dash.server.actors
 
 import akka.actor.{Actor, ActorRef, Terminated}
 

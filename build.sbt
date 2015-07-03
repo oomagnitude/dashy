@@ -30,8 +30,8 @@ lazy val dash = crossProject.in(file(".")).
   .jvmSettings(
     // Add JVM-specific settings here
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-http-scala-experimental" % "1.0-RC2"
-    )
+      "com.typesafe.akka" %% "akka-http-scala-experimental" % "1.0-RC2",
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value)
   )
   .jsSettings(
     skip in packageJSDependencies := false,

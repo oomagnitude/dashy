@@ -1,28 +1,19 @@
-package com.oomagnitude.streams
-
-import java.nio.file.Path
+package com.oomagnitude.dash.server.streams
 
 import akka.actor.ActorRef
 import akka.http.scaladsl.model.ws.{Message, TextMessage}
-import akka.stream.io.SynchronousFileSource
 import akka.stream.scaladsl._
 import akka.stream.stage.{Context, PushStage, SyncDirective, TerminationDirective}
 import akka.stream.{OverflowStrategy, UniformFanInShape}
-import akka.util.ByteString
-import com.oomagnitude.actors.{Subscribe, Close}
-import com.oomagnitude.api.StreamControl.{Next, StreamControlMessage}
-import com.oomagnitude.metrics.model.DataPoint
-import upickle.Writer
-
-import scala.concurrent.Future
+import com.oomagnitude.api.DataPoints
+import com.oomagnitude.api.StreamControl.StreamControlMessage
+import com.oomagnitude.dash.server.actors.{Close, Subscribe}
+import com.oomagnitude.metrics.model.{DataPoint, TimerSample}
+import upickle.{Reader, Writer}
 
 object Flows {
   import scala.concurrent.duration._
   object Tick
-
-  def lineByLineFile(path: Path): Source[ByteString, Future[Long]]#Repr[String, Future[Long]] = {
-    SynchronousFileSource(path.toFile).transform(() => Stages.parseLines("\n"))
-  }
 
   def reportErrorsFlow[T]: Flow[T, T, Unit] =
     Flow[T]
@@ -65,14 +56,14 @@ object Flows {
       throw new UnsupportedOperationException(s"message $msg not supported")
   }
 
-  def dataPointToMessage[T](implicit w: Writer[DataPoint[T]]) = Flow[DataPoint[T]].map { dataPoint =>
+  def dataPointToMessage[T: Writer] = Flow[DataPoints[T]].map { dataPoint =>
     // TODO: expose or handle exceptions thrown here. Right now they are being swallowed.
     val serialized = upickle.write(dataPoint)
     TextMessage.Strict(serialized)
   }
 
-  def dynamicDataStreamFlow[T](fileStreamActor: ActorRef, bufferSize: Int)(implicit w: Writer[DataPoint[T]]): Flow[Message, Message, Any] = {
-    Flow(Source.actorRef[DataPoint[T]](bufferSize, OverflowStrategy.fail)) {
+  def dynamicDataStreamFlow[T: Writer](actorRef: ActorRef, bufferSize: Int): Flow[Message, Message, Any] = {
+    Flow(Source.actorRef[DataPoints[T]](bufferSize, OverflowStrategy.fail)) {
       implicit builder =>
       { (responseSource) =>
         import FlowGraph.Implicits._
@@ -80,11 +71,11 @@ object Flows {
         // deserialize the incoming client messages into params objects
         val msgToObject = builder.add(parseControlMessage)
         // given individual data points, serialize them into ws messages
-        val dataPointToMsg = builder.add(dataPointToMessage)
+        val dataPointToMsg = builder.add(dataPointToMessage[T])
 
         // patches in 1. messages from client; 2. subscriber (downstream) that sends messages to client
         val merge = builder.add(Merge[Any](2))
-        val dispatch = builder.add(Sink.actorRef(fileStreamActor, Close))
+        val dispatch = builder.add(Sink.actorRef(actorRef, Close))
 
         // 0. inform dispatch actor of downstream actor that is subscribing
         // 1. send incoming ws messages to the dispatch actor
@@ -102,57 +93,94 @@ object Flows {
     }.mapMaterialized(_ ⇒ ())
   }
 
-//  // 1. make one flow per file actor
-//  def actorSource[T](actorRef: ActorRef)(implicit bufferSize: Int,
-//                                         overflowStrategy: OverflowStrategy = OverflowStrategy.fail): Flow[Any, T, ActorRef] = {
-//    Flow(Source.actorRef[T](bufferSize, overflowStrategy)) {
-//      implicit builder => { (source) =>
-//        import FlowGraph.Implicits._
-//
-//        val merge = builder.add(Merge[Any](2))
-//        val actorSource = builder.add(Sink.actorRef(actorRef, Close))
-//        val input = builder.add(Flow[Any])
-//
-//        // 1. source of flow's materialized value (i.e., the actor source)
-//        // 2. source of incoming messages
-//        // 3. merge #1 and #2 into one stream and direct it to the external actor
-//        builder.matValue ~> Flow[ActorRef].map(Subscribe) ~> merge.in(0)
-//                                                    input ~> merge.in(1)
-//                                                             merge ~> actorSource
-//
-//        (input.inlet, source.outlet)
-//      }
-//    }
-//  }
-//
-//  // 2. the for each flow, the outlets are merged into a map (key is DataSourceId, value is String)
-//  // Merges a bunch of key/value pairs into a single map
-//  def mergeToMap[K, V](numInlets: Int) = {
-//    FlowGraph.partial() { implicit b =>
-//      import FlowGraph.Implicits._
-//
-//      val zips = Vector.fill(numInlets) {
-//        b.add(ZipWith[Map[K, V], (K, V), Map[K, V]] {
-//          case (map, (key, value)) => map + (key -> value)
-//        })
-//      }
-//
-//      val seedFlow = b.add(Flow[Map[K, V]])
-//      Source.repeat(Map.empty[K, V]) ~> seedFlow
-//
-//      val outlet = zips.foldLeft(seedFlow.outlet) {
-//        (mapSource, zip) =>
-//          mapSource ~> zip.in0
-//          zip.out
-//      }
-//
-//      UniformFanInShape(outlet, zips.map(_.in1): _*)
-//    }
-//  }
-//
-//  // 3. map that to the correct data type by deserializing w/ upickle
-//  // 4. attach downstream processing, if needed (e.g., group and map)
-//  // 5. sink to master control actor, which sends the message on its way
+  // 1. make one flow per file actor
+  def actorSource[T](actorRef: ActorRef)(implicit bufferSize: Int,
+                                         overflowStrategy: OverflowStrategy = OverflowStrategy.fail) = {
+    Source(Source.actorRef[T](bufferSize, overflowStrategy)) { implicit b =>
+      { (source) =>
+        import FlowGraph.Implicits._
+        val actorSource = b.add(Sink.actorRef(actorRef, Close))
+
+        // 1. source of flow's materialized value (i.e., the actor source)
+        // 2. source of incoming messages
+        // 3. merge #1 and #2 into one stream and direct it to the external actor
+        b.matValue ~> Flow[ActorRef].map(Subscribe) ~> actorSource
+
+        source.outlet
+      }
+    }
+  }
+
+  // 2. the for each flow, the outlets are merged into a map (key is DataSourceId, value is String)
+  // Merges a bunch of key/value pairs into a single map
+  def mergeToList[T](numInlets: Int) = {
+    FlowGraph.partial() { implicit b =>
+      import FlowGraph.Implicits._
+
+      val zips = Vector.fill(numInlets) {
+        b.add(ZipWith[List[T], T, List[T]] {
+          case (map, item) => item :: map
+        })
+      }
+
+      val seedFlow = b.add(Flow[List[T]])
+      Source.repeat(List.empty[T]) ~> seedFlow
+
+      val outlet = zips.foldLeft(seedFlow.outlet) {
+        (mapSource, zip) =>
+          mapSource ~> zip.in0
+          zip.out
+      }
+
+      UniformFanInShape(outlet, zips.map(_.in1): _*)
+    }
+  }
+
+  def mergedSources[K, V](outlets: Iterable[(K, Source[V, _])])(implicit bufferSize: Int,
+                                           overflowStrategy: OverflowStrategy = OverflowStrategy.fail) = {
+    Source() { implicit b =>
+      import FlowGraph.Implicits._
+
+      val sources = outlets.map {
+        case (key, outlet) =>
+          val zip = b.add(Zip[K, V]())
+          Source.repeat(key) ~> zip.in0
+          outlet ~> zip.in1
+          zip.out
+      }
+
+      val merge = b.add(mergeToList[(K, V)](sources.size))
+      sources.zipWithIndex.foreach {
+        case (dataSource, i) => dataSource ~> merge.in(i)
+      }
+
+      merge.out
+    }
+  }
+
+  // 3. map that to the correct data type by deserializing w/ upickle
+  def parseJson[T: Reader] = Flow[String].map(json => upickle.read[T](json))
+
+  // 4. attach downstream processing, if needed (e.g., group and map)
+  def timerFlow = Flow[DataPoint[TimerSample]].grouped(2).collect {
+    case samples if samples.size == 2 =>
+      val (first, second) =
+        if (samples.head.timestep < samples(1).timestep) (samples.head, samples(1))
+        else (samples(1), samples.head)
+      val elapsed = (second.value.elapsed - first.value.elapsed) / (second.value.count - first.value.count)
+      DataPoint(second.timestep, elapsed)
+  }
+
+  def counterFlow = Flow[DataPoint[Double]].grouped(2).collect {
+    case samples if samples.size == 2 =>
+      val (first, second) =
+        if (samples.head.timestep < samples(1).timestep) (samples.head, samples(1))
+        else (samples(1), samples.head)
+      val rate = (second.value - first.value) / (second.timestep - first.timestep).toDouble
+      DataPoint(second.timestep, rate)
+  }
+
+  // 5. sink to master control actor, which sends the message on its way
 
   /**
    * Throttles all messages passing through it by only allowing no more than one message at each regular interval

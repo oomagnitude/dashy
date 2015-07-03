@@ -1,9 +1,9 @@
-package com.oomagnitude
+package com.oomagnitude.dash.server
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorFlowMaterializer
-import com.oomagnitude.filesystem.FilesystemAccessor
+import com.oomagnitude.dash.server.filesystem.FilesystemAccessor
 
 import scala.util.{Failure, Success}
 

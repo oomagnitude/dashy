@@ -1,4 +1,4 @@
-package com.oomagnitude.server
+package com.oomagnitude.dash.server
 
 import com.oomagnitude.api.{ExperimentId, ExperimentRunId}
 

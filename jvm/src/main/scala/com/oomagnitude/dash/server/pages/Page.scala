@@ -1,4 +1,4 @@
-package com.oomagnitude.pages
+package com.oomagnitude.dash.server.pages
 
 import scalatags.Text.all._
 
