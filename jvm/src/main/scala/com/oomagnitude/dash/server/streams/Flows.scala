@@ -161,7 +161,7 @@ object Flows {
   // 3. map that to the correct data type by deserializing w/ upickle
   def parseJson[T: Reader] = Flow[String].map(json => upickle.read[T](json))
 
-  // 4. attach downstream processing, if needed (e.g., group and map)
+  // TODO: changed grouped to a sliding window
   def timerFlow = Flow[DataPoint[TimerSample]].grouped(2).collect {
     case samples if samples.size == 2 =>
       val (first, second) =
@@ -171,6 +171,7 @@ object Flows {
       DataPoint(second.timestep, elapsed)
   }
 
+  // TODO: changed grouped to a sliding window
   def counterFlow = Flow[DataPoint[Double]].grouped(2).collect {
     case samples if samples.size == 2 =>
       val (first, second) =

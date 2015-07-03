@@ -1,7 +1,6 @@
 package com.oomagnitude.view
 
-import com.oomagnitude.api.DataSourceId
-import com.oomagnitude.metrics.model.DataPoint
+import com.oomagnitude.model.ChartData
 import org.scalajs.dom.html
 import rx._
 
@@ -12,33 +11,33 @@ object Charts {
   val DefaultDataPointsPerSeries = 100
 
   def defaultRickshawChart(chartContainer: html.Element, legendContainer: html.Element, renderMode: Rx[String],
-                           signals: Seq[(DataSourceId, Rx[DataPoint[Double]])], clearChart: Rx[_]): js.Dynamic = {
+                           data: ChartData[Double]): js.Dynamic = {
     val series = new js.Array[js.Dynamic]()
     val palette = jsnew(Rickshaw.Color.Palette)()
-    var arrays = List.empty[(Rx[DataPoint[Double]], js.Array[js.Dynamic])]
-
-    signals.foreach {
-      case (id, signal) =>
+    val arrays = data.dataSources.map {
+      id =>
         val array = new js.Array[js.Dynamic]()
 
         // TODO: observer for clear buffer
         series.push(l(name = id.toString, data = array, color = palette.color()))
-        arrays = (signal, array) :: arrays
-    }
+        id -> array
+    }.toMap
 
     val graph = jsnew(Rickshaw.Graph)(l(element = chartContainer, renderer = "line", series = series,
       width = DefaultWidth, height = DefaultHeight))
 
-    arrays.foreach {
-      case (signal, array) =>
-        Obs(signal) {
-          array.push(l(x = signal().timestep, y = signal().value))
-          if (array.length > DefaultDataPointsPerSeries) { array.shift() }
-          graph.update()
-        }
+    Obs(data.signal) {
+      data.signal().foreach {
+        case (id, dataPoint) =>
+          arrays.get(id).foreach { array =>
+            array.push(l(x = dataPoint.timestep, y = dataPoint.value))
+            if (array.length > DefaultDataPointsPerSeries) { array.shift() }
+          }
+      }
+      graph.update()
     }
 
-    Obs(clearChart) {
+    Obs(data.clearToggle) {
       arrays.foreach(_._2.length = 0)
       graph.update()
     }

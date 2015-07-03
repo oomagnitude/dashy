@@ -61,14 +61,13 @@ class Server(accessor: Accessor)(implicit fm: FlowMaterializer, system: ActorSys
           }
         } ~
         pathPrefix("api") {
-          path("data" / Segment / Segment / Segment) {(experiment, date, dataSource) =>
-            parameters('paused.as[Option[Boolean]]/*, 'dataType.as[Option[String]]*/) {
-              (maybePaused: Option[Boolean]/*, maybeDataType: Option[String]*/) =>
+          path("data") {
+            parameters('paused.as[Option[Boolean]], 'dataSources.as[String]/*, 'dataType.as[Option[String]]*/) {
+              (maybePaused: Option[Boolean], dsJson: String /*, maybeDataType: Option[String]*/) =>
                 val paused = maybePaused.getOrElse(false)
                 val dataType = "Double"//maybeDataType.getOrElse("Double")
-                val dataSources = List(DataSourceId(experiment, date, dataSource))
+                val dataSources = upickle.read[List[DataSourceId]](dsJson)
                 val metadatas = Await.result(accessor.metadata(dataSources), 100.millis)
-                println(metadatas)
                 val defaultConfig = StreamConfig(frequencyMillis = 100, resolution = 1)
                 val messageFlow = dataType match {
                   case "Double" =>

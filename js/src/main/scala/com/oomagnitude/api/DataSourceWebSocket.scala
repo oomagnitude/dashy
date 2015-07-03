@@ -14,10 +14,10 @@ object DataSourceWebSocket {
   val Closed = 3 //The connection is closed or couldn't be opened.
 }
 
-class DataSourceWebSocket(dataSource: DataSourceId, handleMessage: MessageEvent => Unit, paused: Boolean = false,
+class DataSourceWebSocket(dataSources: List[DataSourceId], handleMessage: MessageEvent => Unit, paused: Boolean = false,
                           afterOpen: Event => Unit = {e => }) {
   import DataSourceWebSocket._
-  private[this] val webSocket = new WebSocket(dataSourceUrl(dataSource, paused))
+  private[this] val webSocket = new WebSocket(dataSourceUrl(dataSources, paused))
   webSocket.onmessage = handleMessage
   webSocket.onopen = afterOpen
 
@@ -36,14 +36,6 @@ class DataSourceWebSocket(dataSource: DataSourceId, handleMessage: MessageEvent 
   def resolution(timestepInterval: Int) = send(Resolution(timestepInterval))
 
   def frequency(duration: Duration) = send(Frequency(duration.toMillis.toInt))
-
-  def mode(mode: String) = {
-    mode match {
-      case "Sample" => send(Sample)
-      case "Rate" => send(Rate)
-      case _ => // ignore (not supported)
-    }
-  }
 
   private def send(message: StreamControlMessage): Unit = {
     if (webSocket.readyState == Open) {

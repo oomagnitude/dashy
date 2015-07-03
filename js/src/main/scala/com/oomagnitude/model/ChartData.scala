@@ -1,6 +1,6 @@
 package com.oomagnitude.model
 
-import com.oomagnitude.api.{DataSourceId, DataSourceWebSocket}
+import com.oomagnitude.api.{DataPoints, DataSourceId, DataSourceWebSocket}
 import com.oomagnitude.metrics.model.DataPoint
 import com.oomagnitude.rx.CallbackRx
 import org.scalajs.dom.raw.MessageEvent
@@ -11,56 +11,48 @@ import scala.concurrent.duration._
 
 class ChartData[T](val title: Option[String],
                    val dataSources: List[DataSourceId],
-                   zero: T,
                    initiallyPaused: Boolean = false,
                    afterOpen: ChartData[T] => Unit = {d: ChartData[T] =>})(implicit reader: Reader[DataPoint[T]]) {
-  private[this] val rxs = dataSources.map {
-    (_, new CallbackRx({e: MessageEvent => upickle.read[DataPoint[T]](e.data.toString)}, DataPoint.zero(zero)))
-  }.toMap
+  private[this] val callbackRx = new CallbackRx({e: MessageEvent =>
+    upickle.read[List[(DataSourceId, DataPoint[T])]](e.data.toString)},
+    List.empty[(DataSourceId, DataPoint[T])])
 
-   val webSockets = dataSources.map { id =>
-    (id, new DataSourceWebSocket(id, rxs(id).callback, initiallyPaused, {e => afterOpen(this)}))
-  }.toMap
+  val webSocket = new DataSourceWebSocket(dataSources, callbackRx.callback, initiallyPaused, {e => afterOpen(this)})
 
-  val signals: List[(DataSourceId, Rx[DataPoint[T]])] = rxs.toList.map(kv => (kv._1, kv._2.data))
+  val signal: Rx[DataPoints[T]] = callbackRx.data
 
   private[this] val _clear = Var(true)
   val clearToggle: Rx[Boolean] = _clear
 
   val paused = Var(initiallyPaused)
   Obs(paused, skipInitial = true) {
-    if (paused()) webSockets.foreach(_._2.pause())
-    else webSockets.foreach(_._2.resume())
+    if (paused()) webSocket.pause()
+    else webSocket.resume()
   }
 
   // TODO: reopen ws when seeking after end of data
   val location = Var(0)
   Obs(location, skipInitial = true) {
-    doWhilePaused({() => webSockets.foreach(_._2.seek(location()))})
+    doWhilePaused({() => webSocket.seek(location())})
   }
 
   val timestepResolution = Var(1)
   Obs(timestepResolution, skipInitial = true) {
-    doWhilePaused({() => webSockets.foreach(_._2.resolution(timestepResolution()))})
+    doWhilePaused({() => webSocket.resolution(timestepResolution())})
   }
 
   val frequency = Var(1000)
   Obs(frequency) {
-    webSockets.foreach(_._2.frequency(frequency().millis))
+    webSocket.frequency(frequency().millis)
   }
 
   def close(): Unit = {
-    webSockets.foreach(_._2.close())
-    rxs.foreach(_._2.close())
+    webSocket.close()
+    callbackRx.close()
   }
 
   def next(): Unit = {
-    webSockets.foreach(_._2.next())
-  }
-
-  val mode = Var("Sample")
-  Obs(mode) {
-    doWhilePaused{() => webSockets.foreach(_._2.mode(mode()))}
+    webSocket.next()
   }
 
   private def emptyBuffers() = _clear() = !_clear()
@@ -69,9 +61,9 @@ class ChartData[T](val title: Option[String],
     if (paused()) {
       action(); emptyBuffers()
     } else {
-      webSockets.foreach(_._2.pause())
+      webSocket.pause()
       action(); emptyBuffers()
-      webSockets.foreach(_._2.resume())
+      webSocket.resume()
     }
   }
 }

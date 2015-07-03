@@ -26,9 +26,9 @@ object ChartBuilder {
     }
     channel.bind(forceGraphData) {(data: ChartData[MutualInfos], remove: () => Unit) =>
       val element = div().render
-      md3.forceGraph(element, data.signals.head._2) {
-        dataPoint =>
-          val mis = dataPoint.value
+      md3.forceGraph(element, data.signal) {
+        dataPoints =>
+          val mis = dataPoints.head._2.value
           val nodes = mis.cells.map(i => md3.forceGraph.Node(i.id, i.numConnections / 10))
           val nodeMap = nodes.zipWithIndex.map(kv => kv._1.name -> kv._2).toMap
           val links = mis.links.map(l => md3.forceGraph.Link(nodeMap(l.cells._1), nodeMap(l.cells._2), 150 - 100 * l.ejc))
@@ -42,10 +42,10 @@ object ChartBuilder {
     val dataSourceForm = chartBuilderForm(builderData,
       {e =>
         if (builderData.dataSources.items().size == 1 && builderData.dataSources.items().head.name == "mutualInformation") {
-          val data = new ChartData(builderData.title(), builderData.dataSources.items(), MutualInfos.zero, initiallyPaused = true,
+          val data = new ChartData(builderData.title(), builderData.dataSources.items(), initiallyPaused = true,
             {d: ChartData[MutualInfos] => d.location() = 90000; d.next()})
           forceGraphData.add(data)
-        } else timeSeriesData.add(new ChartData(builderData.title(), builderData.dataSources.items(), 0.0))})
+        } else timeSeriesData.add(new ChartData(builderData.title(), builderData.dataSources.items()))})
 
     container.appendChild(bs.well(h3("Chart Builder")).render)
     container.appendChild(bs.col12(dataSourceForm).render)

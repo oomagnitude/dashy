@@ -23,15 +23,14 @@ object TimeSeriesChart {
       bs.col1(label("seek to")),
       bs.col2(numberInput(data.location)),
       bs.col1(label("resolution")),
-      bs.col2(numberInput(data.timestepResolution)),
-      bs.col1(selectMenu(Rx{List(SelectOption("Sample", "Sample"), SelectOption("Rate", "Rate"))}, data.mode))))
+      bs.col2(numberInput(data.timestepResolution))))
 
     val chartElement = bs.col12.render
     val legendElement = bs.col6.render
     val renderType = Var(RickshawRenderers.head.value)
     val radioElement = bs.col6(radio("renderer", RickshawRenderers, renderType))
 
-    charts.defaultRickshawChart(chartElement, legendElement, renderType, data.signals, data.clearToggle)
+    charts.defaultRickshawChart(chartElement, legendElement, renderType, data)
 
     div(bs.row(chartElement), bs.row(legendElement, radioElement), bs.row(bs.col12(controls))).render
   }
