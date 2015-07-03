@@ -67,10 +67,10 @@ class Server(accessor: Accessor)(implicit fm: FlowMaterializer, system: ActorSys
                 val paused = maybePaused.getOrElse(false)
                 val dataType = upickle.read[MetricDataType](typeJson)
                 val dataSources = upickle.read[List[DataSourceId]](dsJson)
-                val metadatas = Await.result(accessor.metadata(dataSources), 100.millis)
                 val defaultConfig = StreamConfig(frequencyMillis = 100, resolution = 1)
                 val messageFlow = dataType match {
                   case Number =>
+                    val metadatas = Await.result(accessor.metadata(dataSources), 100.millis)
                     // only accept those data sources that can be converted to a Double
                     val numericSources = metadatas.filter(_._2.interpretation.isConvertibleTo[Double])
                     val flows = numericSources.map {
@@ -85,16 +85,14 @@ class Server(accessor: Accessor)(implicit fm: FlowMaterializer, system: ActorSys
                     }
                     val actor = system.actorOf(MultiplexFileController.props[DataSourceId, DataPoint[Double]](flows, defaultConfig))
                     if (!paused) actor ! Resume
-                    Flows.dynamicDataStreamFlow[Double](actor, bufferSize = 100)
-                  case MutualInfoType =>
-                    val mutualInfoSources = metadatas.filter(_._2.interpretation.isConvertibleTo[MutualInfos])
-                    val flows = mutualInfoSources.map {
-                      case (id, metadata) =>
-                        StreamSource(id, id.toJsonPath, Flows.parseJson[DataPoint[MutualInfos]])
+                    dataPointMessageFlow[Double](actor)
+                  case _ =>
+                    val flows = dataSources.map { id =>
+                        StreamSource(id, id.toJsonPath, Flows.parseJs)
                     }
-                    val actor = system.actorOf(MultiplexFileController.props[DataSourceId, DataPoint[MutualInfos]](flows, defaultConfig))
+                    val actor = system.actorOf(MultiplexFileController.props(flows, defaultConfig))
                     if (!paused) actor ! Resume
-                    Flows.dynamicDataStreamFlow[MutualInfos](actor, bufferSize = 100)
+                    untypedMessageFlow(actor)
                 }
                 handleWebsocketMessages(messageFlow.via(reportErrorsFlow))
             }

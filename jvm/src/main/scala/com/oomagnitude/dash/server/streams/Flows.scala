@@ -5,11 +5,11 @@ import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.stream.scaladsl._
 import akka.stream.stage.{Context, PushStage, SyncDirective, TerminationDirective}
 import akka.stream.{OverflowStrategy, UniformFanInShape}
-import com.oomagnitude.api.DataPoints
+import com.oomagnitude.api.{JsValues, DataPoints}
 import com.oomagnitude.api.StreamControl.StreamControlMessage
 import com.oomagnitude.dash.server.actors.{Close, Subscribe}
 import com.oomagnitude.metrics.model.{DataPoint, TimerSample}
-import upickle.{Reader, Writer}
+import upickle.{Js, Reader, Writer}
 
 object Flows {
   import scala.concurrent.duration._
@@ -26,27 +26,6 @@ object Flows {
       }
     })
 
-  /**
-   * Ignores all incoming messages from the client. Grafts a server-side message source into the flow. All messages
-   * from this source are then emitted to the client via this flow.
-   *
-   * @param serverMessageSource the source of messages, originating from this server
-   * @return the flow
-   */
-  def serverToClientMessageFlow(serverMessageSource: Source[String, _]): Flow[Message, Message, Any] = {
-    Flow() { implicit builder =>
-      import FlowGraph.Implicits._
-
-      val sink = builder.add(Sink.ignore)
-      val mapStringToMsg = builder.add(Flow[String].map[Message]{TextMessage.Strict})
-
-      val source = builder.add(serverMessageSource)
-
-      source ~> mapStringToMsg
-
-      (sink.inlet, mapStringToMsg.outlet)
-    }
-  }
 
   def parseControlMessage = Flow[Message].map[StreamControlMessage] {
     case msg: TextMessage.Strict =>
@@ -56,59 +35,54 @@ object Flows {
       throw new UnsupportedOperationException(s"message $msg not supported")
   }
 
-  def dataPointToMessage[T: Writer] = Flow[DataPoints[T]].map { dataPoint =>
-    // TODO: expose or handle exceptions thrown here. Right now they are being swallowed.
-    val serialized = upickle.write(dataPoint)
-    TextMessage.Strict(serialized)
+  def serializeDataPoint[T: Writer] = Flow[DataPoints[T]].map(dp => upickle.write(dp))
+
+  def jsValuesToMessage = Flow[JsValues].map { jsValues =>
+    val js = Js.Arr(jsValues.toSeq.map {
+      case (id, jsval) => Js.Arr(upickle.writeJs(id), jsval)
+    }: _*)
+    upickle.json.write(js)
   }
 
-  def dynamicDataStreamFlow[T: Writer](actorRef: ActorRef, bufferSize: Int): Flow[Message, Message, Any] = {
-    Flow(Source.actorRef[DataPoints[T]](bufferSize, OverflowStrategy.fail)) {
-      implicit builder =>
-      { (responseSource) =>
-        import FlowGraph.Implicits._
+  def stringToMessage = Flow[String].map(TextMessage.Strict)
 
-        // deserialize the incoming client messages into params objects
-        val msgToObject = builder.add(parseControlMessage)
-        // given individual data points, serialize them into ws messages
-        val dataPointToMsg = builder.add(dataPointToMessage[T])
+  def dataPointMessageFlow[T: Writer](actorRef: ActorRef)(implicit bufferSize: Int = 100) = Flow[Message]
+    .via(parseControlMessage)
+    .via(actorFlow[DataPoints[T]](actorRef))
+    .via(serializeDataPoint[T])
+    .via(stringToMessage)
 
-        // patches in 1. messages from client; 2. subscriber (downstream) that sends messages to client
-        val merge = builder.add(Merge[Any](2))
-        val dispatch = builder.add(Sink.actorRef(actorRef, Close))
+  def untypedMessageFlow(actorRef: ActorRef)(implicit bufferSize: Int = 100) = Flow[Message]
+    .via(parseControlMessage)
+    .via(actorFlow[JsValues](actorRef))
+    .via(jsValuesToMessage)
+    .via(stringToMessage)
 
-        // 0. inform dispatch actor of downstream actor that is subscribing
-        // 1. send incoming ws messages to the dispatch actor
-        // then: send the merged messages to the dispatch actor
-        builder.matValue ~> Flow[ActorRef].map(Subscribe) ~> merge.in(0)
-                                              msgToObject ~> merge.in(1)
-                                                             merge ~> dispatch
-
-        // convert response objects into ws messages
-        // the actor that is materialized as the response source then subscribes to the output of the above graph
-        responseSource ~> dataPointToMsg
-
-        (msgToObject.inlet, dataPointToMsg.outlet)
-      }
-    }.mapMaterialized(_ ⇒ ())
+  def actorSource[Out](actorRef: ActorRef)(implicit bufferSize: Int,
+                                         overflowStrategy: OverflowStrategy = OverflowStrategy.fail) = Source() { implicit b =>
+    import FlowGraph.Implicits._
+    val actorRefFlow = b.add(actorFlow[Out](actorRef))
+    val emptySource = b.add(Source.empty[Any])
+    emptySource ~> actorRefFlow
+    actorRefFlow.outlet
   }
 
-  // 1. make one flow per file actor
-  def actorSource[T](actorRef: ActorRef)(implicit bufferSize: Int,
-                                         overflowStrategy: OverflowStrategy = OverflowStrategy.fail) = {
-    Source(Source.actorRef[T](bufferSize, overflowStrategy)) { implicit b =>
-      { (source) =>
+  def actorFlow[Out](actorRef: ActorRef)(implicit bufferSize: Int,
+                                             overflowStrategy: OverflowStrategy = OverflowStrategy.fail): Flow[Any, Out, Any] =
+    Flow(Source.actorRef[Out](bufferSize, OverflowStrategy.fail)) {
+      implicit b => { (responseSource) =>
         import FlowGraph.Implicits._
-        val actorSource = b.add(Sink.actorRef(actorRef, Close))
+        val merge = b.add(Merge[Any](2))
+        val dispatch = b.add(Sink.actorRef(actorRef, Close))
 
         // 1. source of flow's materialized value (i.e., the actor source)
         // 2. source of incoming messages
         // 3. merge #1 and #2 into one stream and direct it to the external actor
-        b.matValue ~> Flow[ActorRef].map(Subscribe) ~> actorSource
+        b.matValue ~> Flow[ActorRef].map(Subscribe) ~> merge.in(0)
+                                                       merge ~> dispatch
 
-        source.outlet
+        (merge.in(1), responseSource.outlet)
       }
-    }
   }
 
   // 2. the for each flow, the outlets are merged into a map (key is DataSourceId, value is String)
@@ -158,8 +132,9 @@ object Flows {
     }
   }
 
-  // 3. map that to the correct data type by deserializing w/ upickle
   def parseJson[T: Reader] = Flow[String].map(json => upickle.read[T](json))
+
+  def parseJs = Flow[String].map(json => upickle.json.read(json))
 
   // TODO: changed grouped to a sliding window
   def timerFlow = Flow[DataPoint[TimerSample]].grouped(2).collect {
@@ -180,8 +155,6 @@ object Flows {
       val rate = (second.value - first.value) / (second.timestep - first.timestep).toDouble
       DataPoint(second.timestep, rate)
   }
-
-  // 5. sink to master control actor, which sends the message on its way
 
   /**
    * Throttles all messages passing through it by only allowing no more than one message at each regular interval
