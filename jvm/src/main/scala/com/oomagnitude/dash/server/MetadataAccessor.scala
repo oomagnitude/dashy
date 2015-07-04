@@ -1,7 +1,6 @@
 package com.oomagnitude.dash.server
 
-import com.oomagnitude.api.{DataSourceId, ExperimentRunId}
-import com.oomagnitude.metrics.model.MetricMetadata
+import com.oomagnitude.metrics.model.{DataSourceId, ExperimentRunId, MetricMetadata}
 
 import scala.concurrent.Future
 

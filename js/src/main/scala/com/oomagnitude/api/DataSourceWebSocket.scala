@@ -2,6 +2,7 @@ package com.oomagnitude.api
 
 import com.oomagnitude.api.StreamControl._
 import com.oomagnitude.api.Uris._
+import com.oomagnitude.metrics.model.DataSourceId
 import org.scalajs.dom.Event
 import org.scalajs.dom.raw.{MessageEvent, WebSocket}
 

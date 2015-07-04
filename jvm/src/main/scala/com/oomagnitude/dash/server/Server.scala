@@ -4,7 +4,7 @@ import java.nio.file.Paths
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshalling.ToResponseMarshallable._
-import akka.http.scaladsl.model.{HttpEntity, MediaTypes}
+import akka.http.scaladsl.model.{HttpEntity, MediaTypes, RequestEntity}
 import akka.http.scaladsl.server.Directives
 import akka.stream.FlowMaterializer
 import com.oomagnitude.api.StreamControl.Resume
@@ -13,8 +13,8 @@ import com.oomagnitude.dash.server.actors.MultiplexFileController
 import com.oomagnitude.dash.server.actors.MultiplexFileController.{StreamConfig, StreamSource}
 import com.oomagnitude.dash.server.pages.Page
 import com.oomagnitude.dash.server.streams.Flows
+import com.oomagnitude.metrics.filesystem._
 import com.oomagnitude.metrics.model._
-import com.oomagnitude.metrics.model.ext.MutualInfos
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor}
@@ -27,12 +27,13 @@ object Server {
   val CssOutput = JsRoot.resolve("classes").resolve("css")
 }
 
-class Server(accessor: Accessor)(implicit fm: FlowMaterializer, system: ActorSystem, executor: ExecutionContextExecutor) extends Directives {
+class Server(api: ExperimentApi)(implicit fm: FlowMaterializer, system: ActorSystem,
+                                 executor: ExecutionContextExecutor) extends Directives {
   import Flows._
   import Server._
 
   def route =
-    logRequestResult("scalajs-dashboard") {
+    logRequestResult("dashy") {
       get {
       /* START PAGE */
       pathSingleSlash {
@@ -60,7 +61,7 @@ class Server(accessor: Accessor)(implicit fm: FlowMaterializer, system: ActorSys
             getFromFile(CssOutput.resolve(filename).toFile)
           }
         } ~
-        pathPrefix("api") {
+        pathPrefix("ws") {
           path("data") {
             parameters('paused.as[Option[Boolean]], 'dataSources.as[String], 'dataType.as[String]) {
               (maybePaused: Option[Boolean], dsJson: String, typeJson: String) =>
@@ -70,18 +71,18 @@ class Server(accessor: Accessor)(implicit fm: FlowMaterializer, system: ActorSys
                 val defaultConfig = StreamConfig(frequencyMillis = 100, resolution = 1)
                 val messageFlow = dataType match {
                   case Number =>
-                    val metadatas = Await.result(accessor.metadata(dataSources), 100.millis)
+                    val metadatas = Await.result(api.metadata(dataSources), 100.millis)
                     // only accept those data sources that can be converted to a Double
-                    val numericSources = metadatas.filter(_._2.interpretation.isConvertibleTo[Double])
+                    val numericSources = metadatas.filter(_.interpretation.isConvertibleTo[Double])
                     val flows = numericSources.map {
-                      case (id, metadata) =>
+                      metadata =>
                         val flow = metadata.interpretation match {
                           case Count => Count.transformFlow
                           case Scalar => Scalar.transformFlow
                           case t: Time => t.transformFlow
                           case _ => throw new IllegalArgumentException("non-numeric type detected")
                         }
-                        StreamSource(id, id.toJsonPath, flow)
+                        StreamSource(metadata.id, metadata.id.toJsonPath, flow)
                     }
                     val actor = system.actorOf(MultiplexFileController.props[DataSourceId, DataPoint[Double]](flows, defaultConfig))
                     if (!paused) actor ! Resume
@@ -96,30 +97,25 @@ class Server(accessor: Accessor)(implicit fm: FlowMaterializer, system: ActorSys
                 }
                 handleWebsocketMessages(messageFlow.via(reportErrorsFlow))
             }
-          } ~
-          path("experiments" / Segment / Segment) { (experiment, date) =>
-            complete {
-              accessor.metadata(ExperimentRunId(experiment, date)).map(m => upickle.write(m))
-            }
-          } ~
-          path("experiments" / Segment) { experiment =>
-            complete {
-              // TODO: change API to deal with ID case classes directly
-              accessor.experimentRuns(ExperimentId(experiment)).map { ids =>
-                upickle.write(ids.map(_.date))
-              }
-            }
-          } ~
-          path("experiments") {
-            complete {
-              accessor.experiments.map { ids =>
-                upickle.write(ids.map(_.experiment))
-              }
-            }
           }
         } ~
         getFromResourceDirectory("web")
-    }
+      } ~
+        post {
+          path("api" / Segments){ s =>
+            extract(ctx => ctx.request.entity) { e: RequestEntity =>
+              // TODO: figure out how to use stream Source to accomplish the goal
+              complete {
+                e match {
+                  case HttpEntity.Strict(_, bytes) =>
+                    AutowireServer.route[ExperimentApi](api)(autowire.Core.Request(s, upickle.read[Map[String, String]](bytes.utf8String)))
+                  case _ =>
+                    throw new IllegalArgumentException(s"unexpected HTTP entity type")
+                }
+              }
+            }
+          }
+        }
     }
 }
 

@@ -20,6 +20,7 @@ lazy val dash = crossProject.in(file(".")).
     resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     unmanagedSourceDirectories in Compile += baseDirectory.value  / "shared" / "main" / "scala",
     libraryDependencies ++= Seq(
+      "com.lihaoyi" %%% "autowire" % "0.2.5",
       "com.lihaoyi" %%% "scalatags" % "0.5.2",
       "com.lihaoyi" %%% "upickle" % "0.2.7",
       "com.lihaoyi" %%% "utest" % "0.3.0" % "test",

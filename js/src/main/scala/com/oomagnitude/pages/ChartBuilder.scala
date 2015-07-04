@@ -1,6 +1,6 @@
 package com.oomagnitude.pages
 
-import com.oomagnitude.api.{CustomType, Number, RemoteExperimentApi}
+import com.oomagnitude.api.{CustomType, Number}
 import com.oomagnitude.bind.ViewChannel
 import com.oomagnitude.metrics.model.ext.MutualInfos
 import com.oomagnitude.model.{ChartBuilderData, ChartData, ListWithId}
@@ -37,12 +37,12 @@ object ChartBuilder {
       removablePanel(data.title, element, {() => data.close(); remove()})
     }
 
-    val builderData = new ChartBuilderData(RemoteExperimentApi)
+    val builderData = new ChartBuilderData
 
     val dataSourceForm = chartBuilderForm(builderData,
       {e =>
         // TODO: remove manual check (use metadata instead)
-        if (builderData.dataSources.items().size == 1 && builderData.dataSources.items().head.name == "mutualInformation") {
+        if (builderData.dataSources.items().size == 1 && builderData.dataSources.items().head.metricId.toString == "mutualInformation") {
           val data = new ChartData(builderData.title(), builderData.dataSources.items(), CustomType, initiallyPaused = true,
             {d: ChartData[MutualInfos] => d.location() = 90000; d.next()})
           forceGraphData.add(data)

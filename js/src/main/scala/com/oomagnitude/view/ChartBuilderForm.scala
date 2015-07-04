@@ -1,7 +1,7 @@
 package com.oomagnitude.view
 
-import com.oomagnitude.api.DataSourceId
 import com.oomagnitude.bind.ModelViewBinding
+import com.oomagnitude.metrics.model._
 import com.oomagnitude.model.ChartBuilderData
 import org.scalajs.dom.html
 import org.scalajs.dom.raw.MouseEvent
@@ -13,11 +13,12 @@ object ChartBuilderForm {
   import Templates._
 
   def apply(bd: ChartBuilderData, addChart: MouseEvent => Unit): html.Element = {
-    val experimentsDisplay = Rx {bd.experimentSelection.experiments().sorted.map(id => SelectOption(id, id))}
-    val datesDisplay = Rx {bd.experimentSelection.dates().sorted(Ordering.String.reverse).map(id =>
-        SelectOption(s"${moment.humanReadableDurationFromNow(id)} (${moment.calendarDate(id)})", id))
+    val experimentsDisplay = Rx {bd.experimentSelection.experiments().sorted.map(id => SelectOption(id.experiment, id.experiment))}
+    val datesDisplay = Rx {bd.experimentSelection.dates().sorted.map(id =>
+        SelectOption(s"${moment.humanReadableDurationFromNow(id.date)} (${moment.calendarDate(id.date)})", id.date))
     }
-    val dataSourceDisplay = Rx{bd.experimentSelection.dataSources().map(meta => SelectOption(meta.id.toString, meta.id.toString))}
+    // TODO: support for going back and forth between strings and IDs
+    val dataSourceDisplay = Rx{bd.experimentSelection.dataSources().sorted.map(m => SelectOption(m.id.metricId.toString, m.id.metricId.toString))}
 
     val experimentSelect = typeahead("select an experiment", experimentsDisplay, bd.experimentSelection.experiment)
     val dateSelect = typeahead("select a date", datesDisplay, bd.experimentSelection.date)

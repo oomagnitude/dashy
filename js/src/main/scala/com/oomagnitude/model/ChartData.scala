@@ -1,7 +1,7 @@
 package com.oomagnitude.model
 
-import com.oomagnitude.api.{MetricDataType, DataPoints, DataSourceId, DataSourceWebSocket}
-import com.oomagnitude.metrics.model.DataPoint
+import com.oomagnitude.api.{DataPoints, DataSourceWebSocket, MetricDataType}
+import com.oomagnitude.metrics.model.{DataSourceId, DataPoint}
 import com.oomagnitude.rx.CallbackRx
 import org.scalajs.dom.raw.MessageEvent
 import rx._

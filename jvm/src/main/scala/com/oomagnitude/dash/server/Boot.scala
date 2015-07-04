@@ -3,7 +3,7 @@ package com.oomagnitude.dash.server
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorFlowMaterializer
-import com.oomagnitude.dash.server.filesystem.FilesystemAccessor
+import com.oomagnitude.dash.server.filesystem.FilesystemExperimentApi
 
 import scala.util.{Failure, Success}
 
@@ -16,7 +16,7 @@ object Boot extends App {
   val interface = config.getString("app.interface")
   val port = config.getInt("app.port")
 
-  val service = new Server(new FilesystemAccessor)
+  val service = new Server(new FilesystemExperimentApi)
 
   val binding = Http().bindAndHandle(service.route, interface, port)
   binding.onComplete {
