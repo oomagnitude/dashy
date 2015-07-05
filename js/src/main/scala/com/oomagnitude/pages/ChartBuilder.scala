@@ -2,11 +2,13 @@ package com.oomagnitude.pages
 
 import com.oomagnitude.api.{CustomType, Number}
 import com.oomagnitude.bind.ViewChannel
+import com.oomagnitude.metrics.model.{Time, Scalar, Count, Info}
 import com.oomagnitude.metrics.model.ext.MutualInfos
 import com.oomagnitude.model.{ChartData, ChartModel, ListWithId}
 import com.oomagnitude.rx.Rxs
 import com.oomagnitude.view._
 import org.scalajs.dom.html
+import org.scalajs.dom.raw.MouseEvent
 
 import scala.scalajs.js.annotation.JSExport
 import scalatags.JsDom.all._
@@ -40,13 +42,19 @@ object ChartBuilder {
     val builderData = new ChartModel
 
     val dataSourceForm = chartBuilderForm(builderData,
-      {e =>
-        // TODO: remove manual check (use metadata instead)
-        if (builderData.selectedDataSources.items().size == 1 && builderData.selectedDataSources.items().head.id.metricId.toString == "mutualInformation") {
-          val data = new ChartData(builderData.toParams, CustomType, initiallyPaused = true,
-            {d: ChartData[MutualInfos] => d.location() = 90000; d.next()})
-          forceGraphData.add(data)
-        } else timeSeriesData.add(new ChartData(builderData.toParams, Number))})
+      {e: MouseEvent =>
+        if (builderData.nonEmpty) {
+          val first = builderData.selectedDataSources.items().head
+          first.interpretation match {
+            case i: Info if i.dataType.contains("List") => // TODO: fix data type in metadata
+              forceGraphData.add(new ChartData(builderData.toParams, CustomType, initiallyPaused = true,
+                {d: ChartData[MutualInfos] => d.location() = 90000; d.next()}))
+            case Count | Scalar| Time(_) =>
+              timeSeriesData.add(new ChartData(builderData.toParams, Number))
+            case _ => // do nothing
+          }
+        }
+      })
 
     container.appendChild(bs.well(h3("Chart Builder")).render)
     container.appendChild(bs.col12(dataSourceForm).render)

@@ -14,6 +14,8 @@ trait ChartFormData {
   def title: Var[Option[String]]
   def selectedDataSources: RxOptionList[MetricMetadata]
   def clear(): Unit
+  def isEmpty: Boolean = selectedDataSources.items().isEmpty
+  def nonEmpty: Boolean = !isEmpty
   def toParams = ChartParams(title(), selectedDataSources.items())
 }
 
