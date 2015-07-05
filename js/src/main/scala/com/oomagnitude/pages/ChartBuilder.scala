@@ -3,7 +3,7 @@ package com.oomagnitude.pages
 import com.oomagnitude.api.{CustomType, Number}
 import com.oomagnitude.bind.ViewChannel
 import com.oomagnitude.metrics.model.ext.MutualInfos
-import com.oomagnitude.model.{ChartBuilderData, ChartData, ListWithId}
+import com.oomagnitude.model.{ChartData, ChartModel, ListWithId}
 import com.oomagnitude.rx.Rxs
 import com.oomagnitude.view._
 import org.scalajs.dom.html
@@ -22,7 +22,7 @@ object ChartBuilder {
     val timeSeriesData = new ListWithId[ChartData[Double]]
     val forceGraphData = new ListWithId[ChartData[MutualInfos]]
     channel.bind(timeSeriesData) {(data: ChartData[Double], remove: () => Unit) =>
-      removablePanel(data.title, timeSeriesChart(data), {() => data.close(); remove()})
+      removablePanel(data.params.title, timeSeriesChart(data), {() => data.close(); remove()})
     }
     channel.bind(forceGraphData) {(data: ChartData[MutualInfos], remove: () => Unit) =>
       val element = div().render
@@ -34,19 +34,19 @@ object ChartBuilder {
           val links = mis.links.map(l => md3.forceGraph.Link(nodeMap(l.cells._1), nodeMap(l.cells._2), 150 - 100 * l.ejc))
           md3.forceGraph.Graph(nodes, links)
       }
-      removablePanel(data.title, element, {() => data.close(); remove()})
+      removablePanel(data.params.title, element, {() => data.close(); remove()})
     }
 
-    val builderData = new ChartBuilderData
+    val builderData = new ChartModel
 
     val dataSourceForm = chartBuilderForm(builderData,
       {e =>
         // TODO: remove manual check (use metadata instead)
-        if (builderData.dataSources.items().size == 1 && builderData.dataSources.items().head.metricId.toString == "mutualInformation") {
-          val data = new ChartData(builderData.title(), builderData.dataSources.items(), CustomType, initiallyPaused = true,
+        if (builderData.selectedDataSources.items().size == 1 && builderData.selectedDataSources.items().head.id.metricId.toString == "mutualInformation") {
+          val data = new ChartData(builderData.toParams, CustomType, initiallyPaused = true,
             {d: ChartData[MutualInfos] => d.location() = 90000; d.next()})
           forceGraphData.add(data)
-        } else timeSeriesData.add(new ChartData(builderData.title(), builderData.dataSources.items(), Number))})
+        } else timeSeriesData.add(new ChartData(builderData.toParams, Number))})
 
     container.appendChild(bs.well(h3("Chart Builder")).render)
     container.appendChild(bs.col12(dataSourceForm).render)

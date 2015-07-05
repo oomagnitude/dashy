@@ -8,10 +8,10 @@ import scalatags.JsDom.all._
 
 object TimeSeriesChart {
   val RickshawRenderers = List(
-    SelectOption(name = "line", value = "line"),
-    SelectOption(name = "stack", value = "stack"),
-    SelectOption(name = "bar", value = "bar"),
-    SelectOption(name = "scatter", value = "scatterplot"))
+    SelectOption(id = "line", name = "line"),
+    SelectOption(id = "stack", name = "stack"),
+    SelectOption(id = "bar", name = "bar"),
+    SelectOption(id = "scatterplot", name = "scatter"))
 
   def apply(data: ChartData[Double]): HTMLElement = {
     import Templates._
@@ -27,7 +27,7 @@ object TimeSeriesChart {
 
     val chartElement = bs.col12.render
     val legendElement = bs.col6.render
-    val renderType = Var(RickshawRenderers.head.value)
+    val renderType = Var(RickshawRenderers.head.id)
     val radioElement = bs.col6(radio("renderer", RickshawRenderers, renderType))
 
     charts.defaultRickshawChart(chartElement, legendElement, renderType, data)

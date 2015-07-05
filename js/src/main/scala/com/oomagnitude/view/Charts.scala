@@ -14,13 +14,13 @@ object Charts {
                            data: ChartData[Double]): js.Dynamic = {
     val series = new js.Array[js.Dynamic]()
     val palette = jsnew(Rickshaw.Color.Palette)()
-    val arrays = data.dataSources.map {
-      id =>
+    val arrays = data.params.dataSources.map {
+      m =>
         val array = new js.Array[js.Dynamic]()
 
         // TODO: observer for clear buffer
-        series.push(l(name = id.toString, data = array, color = palette.color()))
-        id -> array
+        series.push(l(name = m.id.toString, data = array, color = palette.color()))
+        m.id -> array
     }.toMap
 
     val graph = jsnew(Rickshaw.Graph)(l(element = chartContainer, renderer = "line", series = series,

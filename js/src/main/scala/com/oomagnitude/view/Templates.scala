@@ -14,7 +14,7 @@ object Templates {
   
   def selectMenu(options: Rx[List[SelectOption]], selectedVar: Var[String], classes: Option[String] = None): html.Select = {
     // TODO: make first one selected
-    val optionTags = Rx{options().map(opt => option(value:=opt.value, opt.name))}
+    val optionTags = Rx{options().map(opt => option(value:=opt.id, opt.name))}
     val selectTag = select(optionTags.asFrags).render
 
     classes.foreach(selectTag.setAttribute("class", _))
@@ -72,8 +72,8 @@ object Templates {
     var first = true
     val optionTags: List[TypedTag[_]] = options.map {
       opt =>
-        var inp = input(`type`:="radio", name:=radioName, id:=opt.name, value:=opt.value,
-          onchange:= {e: dom.Event => checkedValue() = opt.value})
+        var inp = input(`type`:="radio", name:=radioName, id:=opt.name, value:=opt.id,
+          onchange:= {e: dom.Event => checkedValue() = opt.id})
         if (first) inp = inp(checked:="checked")
         first = false
         bs.formGroup(bs.col12(inp, label(`for`:=opt.name, opt.name)))
