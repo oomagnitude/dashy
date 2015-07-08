@@ -17,11 +17,10 @@ object DataSourceWebSocket {
 
 class DataSourceWebSocket(dataSources: List[DataSourceId],
                           handleMessage: MessageEvent => Unit,
-                          metricDataType: MetricDataType,
                           paused: Boolean = false,
                           afterOpen: Event => Unit = {e => }) {
   import DataSourceWebSocket._
-  private[this] val webSocket = new WebSocket(dataSourceUrl(dataSources, paused, metricDataType))
+  private[this] val webSocket = new WebSocket(dataSourceUrl(dataSources, paused))
   webSocket.onmessage = handleMessage
   webSocket.onopen = afterOpen
 

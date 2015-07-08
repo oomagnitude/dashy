@@ -1,11 +1,12 @@
 package com.oomagnitude.model
 
+import autowire._
 import com.oomagnitude.api.{AutowireClient, ExperimentApi}
-import com.oomagnitude.metrics.model.{MetricMetadata, ExperimentRunId, ExperimentId}
+import com.oomagnitude.metrics.model.Metrics.MetricMetadata
+import com.oomagnitude.metrics.model.{ExperimentId, ExperimentRunId}
 import com.oomagnitude.rx.Rxs._
 import com.oomagnitude.view.SelectOption._
 import rx._
-import autowire._
 
 trait ChartFormData {
   def experimentOptions: SelectOptions[ExperimentId]

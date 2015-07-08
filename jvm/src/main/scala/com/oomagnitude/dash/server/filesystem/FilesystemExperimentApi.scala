@@ -1,11 +1,12 @@
 package com.oomagnitude.dash.server.filesystem
 
-import java.io.{FilenameFilter, File}
+import java.io.{File, FilenameFilter}
 import java.nio.file.Path
 
 import com.oomagnitude.api.ExperimentApi
-import com.oomagnitude.metrics.model.{DataSourceId, ExperimentId, MetricMetadata, ExperimentRunId}
 import com.oomagnitude.metrics.filesystem._
+import com.oomagnitude.metrics.model.Metrics.MetricMetadata
+import com.oomagnitude.metrics.model.{DataSourceId, ExperimentId, ExperimentRunId}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 

@@ -1,7 +1,9 @@
 package com.oomagnitude.view
 
-import com.oomagnitude.collection.CollectionExt
-import CollectionExt._
+import com.oomagnitude.api.DataPoints
+import com.oomagnitude.collection.CollectionExt._
+import com.oomagnitude.metrics.model.Metrics.MutualInfos
+import com.oomagnitude.model.ChartData
 import org.scalajs.dom.html
 import rx._
 
@@ -19,13 +21,13 @@ object D3 {
   val RedGradient = IndexedSeq("#f7fcfd","#e5f5f9","#ccece6", "#99d8c9", "#66c2a4", "#41ae76", "#238b45", "#006d2c",
     "#00441b")
 
-  private def colorScale[T](data: Iterable[T], colors: Seq[String])(implicit temp: T => Double): js.Dynamic = {
+  private def colorScale[T: Ordering](data: Iterable[T], colors: Seq[String])(toNumber: T => Double): js.Dynamic = {
     require(colors.size > 1, s"color scale must provide at least 2 colors for ${JSON.stringify(colors)}")
 
     val (min, max) = data.minAndMax
-    val extent = max - min
+    val extent = toNumber(max) - toNumber(min)
     val increment = extent / (colors.size - 1)
-    val domain = colors.indices.map(min + increment * _)
+    val domain = colors.indices.map(toNumber(min) + increment * _)
 
     d3.scale.linear()
       .domain(domain.toJSArray)
@@ -43,7 +45,18 @@ object D3 {
 
     case class Graph(nodes: List[Node], links: List[Link])
 
-    def apply[T](container: html.Element, data: Rx[T])(implicit convert: T => Graph): Unit = {
+    def mutualInfoToGraph(dataPoints: DataPoints[MutualInfos]): Graph = {
+      val mis = dataPoints.head._2.value
+      val nodes = mis.cells.map(i => Node(i.id, i.numConnections / 10))
+      val nodeMap = nodes.zipWithIndex.map(kv => kv._1.name -> kv._2).toMap
+      val links = mis.links.map(l => Link(nodeMap(l.cells._1), nodeMap(l.cells._2), 150 - 100 * l.ejc))
+      Graph(nodes, links)
+    }
+
+    def apply[T](data: ChartData[T])(implicit convert: DataPoints[T] => Graph): html.Element = {
+      implicit val nodeOrdering = new Ordering[Node] {
+        override def compare(x: Node, y: Node): Int = x.group.compare(y.group)
+      }
       val width = DefaultWidth
       val height = DefaultHeight
 
@@ -52,7 +65,8 @@ object D3 {
         .linkDistance({ d: js.Dynamic => d.value })
         .size(js.Array(width, height))
 
-      val svg = d3.select(container).append("svg")
+      val container = div().render
+      val svg = d3.select(container).append("com/oomagnitude/svg")
         .attr("width", width)
         .attr("height", height)
         .style("background-color", "#d8d8d8")
@@ -65,16 +79,13 @@ object D3 {
 
       svg.call(tip)
 
-      Obs(data, skipInitial = true) {
-        val graph: Graph = data()
+      Obs(data.signal, skipInitial = true) {
+        val graph: Graph = data.signal()
         val colorGradient = colorScale(graph.nodes, GreenGradient){(d: Node) => d.group}
         val nodes = graph.nodes.toJSArray.map(_.toJs)
         val links = graph.links.toJSArray.map(_.toJs)
 
-        force
-          .nodes(nodes)
-          .links(links)
-          .start()
+        force.nodes(nodes).links(links).start()
 
         val link = svg.selectAll(".link")
           .data(links)
@@ -101,6 +112,7 @@ object D3 {
             .attr("cy", { d: js.Dynamic => d.y })
         })
       }
+      container
     }
   }
 }

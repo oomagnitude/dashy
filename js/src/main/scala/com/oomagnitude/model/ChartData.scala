@@ -1,7 +1,7 @@
 package com.oomagnitude.model
 
-import com.oomagnitude.api.{DataPoints, DataSourceWebSocket, MetricDataType}
-import com.oomagnitude.metrics.model.{DataSourceId, DataPoint}
+import com.oomagnitude.api.{DataPoints, DataSourceWebSocket}
+import com.oomagnitude.metrics.model.{DataPoint, DataSourceId}
 import com.oomagnitude.rx.CallbackRx
 import org.scalajs.dom.raw.MessageEvent
 import rx._
@@ -10,14 +10,13 @@ import upickle.Reader
 import scala.concurrent.duration._
 
 class ChartData[T](val params: ChartParams,
-                   metricDataType: MetricDataType,
                    initiallyPaused: Boolean = false,
                    afterOpen: ChartData[T] => Unit = {d: ChartData[T] =>})(implicit reader: Reader[DataPoint[T]]) {
   private[this] val callbackRx = new CallbackRx({e: MessageEvent =>
     upickle.read[List[(DataSourceId, DataPoint[T])]](e.data.toString)},
     List.empty[(DataSourceId, DataPoint[T])])
 
-  val webSocket = new DataSourceWebSocket(params.dataSources.map(_.id), callbackRx.callback, metricDataType,
+  val webSocket = new DataSourceWebSocket(params.dataSources.map(_.id), callbackRx.callback,
     initiallyPaused, {e => afterOpen(this)})
 
   val signal: Rx[DataPoints[T]] = callbackRx.data

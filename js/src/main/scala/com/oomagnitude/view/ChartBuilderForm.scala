@@ -1,7 +1,7 @@
 package com.oomagnitude.view
 
 import com.oomagnitude.bind.ModelViewBinding
-import com.oomagnitude.metrics.model._
+import com.oomagnitude.metrics.model.Metrics.MetricMetadata
 import com.oomagnitude.model.ChartFormData
 import org.scalajs.dom.html
 import org.scalajs.dom.raw.MouseEvent

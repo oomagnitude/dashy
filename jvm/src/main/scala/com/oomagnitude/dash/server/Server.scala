@@ -14,6 +14,7 @@ import com.oomagnitude.dash.server.actors.MultiplexFileController.{StreamConfig,
 import com.oomagnitude.dash.server.pages.Page
 import com.oomagnitude.dash.server.streams.Flows
 import com.oomagnitude.metrics.filesystem._
+import com.oomagnitude.metrics.model.Metrics._
 import com.oomagnitude.metrics.model._
 
 import scala.concurrent.duration._
@@ -37,13 +38,21 @@ class Server(api: ExperimentApi)(implicit fm: FlowMaterializer, system: ActorSys
       get {
       /* START PAGE */
       pathSingleSlash {
-        complete{
+        complete {
           HttpEntity(
             MediaTypes.`text/html`,
-            "<!DOCTYPE html>\n" + Page.Skeleton.render
+            "<!DOCTYPE html>\n" + Page.skeleton(Page.ChartBuilderBoot).render
           )
         }
       } ~
+        path("gabor") {
+          complete {
+            HttpEntity(
+              MediaTypes.`text/html`,
+              "<!DOCTYPE html>\n" + Page.skeleton(Page.GaborBoot).render
+            )
+          }
+        } ~
         // Scala-JS puts them in the root of the resource directory per default,
         // so that's where we pick them up
         pathPrefix("js") {
@@ -63,39 +72,26 @@ class Server(api: ExperimentApi)(implicit fm: FlowMaterializer, system: ActorSys
         } ~
         pathPrefix("ws") {
           path("data") {
-            parameters('paused.as[Option[Boolean]], 'dataSources.as[String], 'dataType.as[String]) {
-              (maybePaused: Option[Boolean], dsJson: String, typeJson: String) =>
+            parameters('paused.as[Option[Boolean]], 'dataSources.as[String]) {
+              (maybePaused: Option[Boolean], dsJson: String) =>
                 val paused = maybePaused.getOrElse(false)
-                val dataType = upickle.read[MetricDataType](typeJson)
                 val dataSources = upickle.read[List[DataSourceId]](dsJson)
+                val metadatas = Await.result(api.metadata(dataSources), 100.millis)
                 val defaultConfig = StreamConfig(frequencyMillis = 100, resolution = 1)
-                val messageFlow = dataType match {
-                  case Number =>
-                    val metadatas = Await.result(api.metadata(dataSources), 100.millis)
-                    // only accept those data sources that can be converted to a Double
-                    val numericSources = metadatas.filter(_.interpretation.isConvertibleTo[Double])
-                    val flows = numericSources.map {
-                      metadata =>
-                        val flow = metadata.interpretation match {
-                          case Count => Count.transformFlow
-                          case Scalar => Scalar.transformFlow
-                          case t: Time => t.transformFlow
-                          case _ => throw new IllegalArgumentException("non-numeric type detected")
-                        }
-                        StreamSource(metadata.id, metadata.id.toJsonPath, flow)
-                    }
-                    val actor = system.actorOf(MultiplexFileController.props[DataSourceId, DataPoint[Double]](flows, defaultConfig))
-                    if (!paused) actor ! Resume
-                    dataPointMessageFlow[Double](actor)
-                  case _ =>
-                    val flows = dataSources.map { id =>
-                        StreamSource(id, id.toJsonPath, Flows.parseJs)
-                    }
-                    val actor = system.actorOf(MultiplexFileController.props(flows, defaultConfig))
-                    if (!paused) actor ! Resume
-                    untypedMessageFlow(actor)
+                val flows = metadatas.map { metadata =>
+                  val flow = metadata.zero match {
+                    case _: Count => parseJson[DataPoint[Count]].via(counterFlow).via(toJs)
+                    case _: Time => parseJson[DataPoint[Time]].via(timerFlow).via(toJs)
+                    case _: Scalar => parseJson[DataPoint[Scalar]].map(dp => DataPoint(dp.timestep, dp.value.value)).via(toJs)
+                    case _ => parseJs
+                  }
+                  StreamSource(metadata.id, metadata.id.toJsonPath, flow)
                 }
-                handleWebsocketMessages(messageFlow.via(reportErrorsFlow))
+
+                val actor = system.actorOf(MultiplexFileController.props(flows, defaultConfig))
+                if (!paused) actor ! Resume
+                untypedMessageFlow(actor)
+                handleWebsocketMessages(untypedMessageFlow(actor).via(reportErrorsFlow))
             }
           }
         } ~

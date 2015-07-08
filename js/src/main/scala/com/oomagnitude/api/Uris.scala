@@ -14,9 +14,8 @@ object Uris {
 
   // TODO: find suitable URI construction library with safe encoding
   // TODO: make URI encoding work with both js and jvm
-  def dataSourceUrl(ids: List[DataSourceId], paused: Boolean, dataType: MetricDataType): String = {
+  def dataSourceUrl(ids: List[DataSourceId], paused: Boolean): String = {
     val encodedDataSources = js.Dynamic.global.encodeURIComponent(upickle.write(ids)).asInstanceOf[String]
-    val encodedDataType = js.Dynamic.global.encodeURIComponent(upickle.write(dataType)).asInstanceOf[String]
-    webSocketAddress + s"/ws/data?dataSources=$encodedDataSources&paused=$paused&dataType=$encodedDataType"
+    webSocketAddress + s"/ws/data?dataSources=$encodedDataSources&paused=$paused"
   }
 }

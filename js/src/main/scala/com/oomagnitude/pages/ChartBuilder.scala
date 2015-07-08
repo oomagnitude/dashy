@@ -1,9 +1,7 @@
 package com.oomagnitude.pages
 
-import com.oomagnitude.api.{CustomType, Number}
 import com.oomagnitude.bind.ViewChannel
-import com.oomagnitude.metrics.model.{Time, Scalar, Count, Info}
-import com.oomagnitude.metrics.model.ext.MutualInfos
+import com.oomagnitude.metrics.model.Metrics.{Time, Scalar, Count, MutualInfos}
 import com.oomagnitude.model.{ChartData, ChartModel, ListWithId}
 import com.oomagnitude.rx.Rxs
 import com.oomagnitude.view._
@@ -27,16 +25,8 @@ object ChartBuilder {
       removablePanel(data.params.title, timeSeriesChart(data), {() => data.close(); remove()})
     }
     channel.bind(forceGraphData) {(data: ChartData[MutualInfos], remove: () => Unit) =>
-      val element = div().render
-      md3.forceGraph(element, data.signal) {
-        dataPoints =>
-          val mis = dataPoints.head._2.value
-          val nodes = mis.cells.map(i => md3.forceGraph.Node(i.id, i.numConnections / 10))
-          val nodeMap = nodes.zipWithIndex.map(kv => kv._1.name -> kv._2).toMap
-          val links = mis.links.map(l => md3.forceGraph.Link(nodeMap(l.cells._1), nodeMap(l.cells._2), 150 - 100 * l.ejc))
-          md3.forceGraph.Graph(nodes, links)
-      }
-      removablePanel(data.params.title, element, {() => data.close(); remove()})
+      removablePanel(data.params.title, md3.forceGraph(data)(md3.forceGraph.mutualInfoToGraph),
+        {() => data.close(); remove()})
     }
 
     val builderData = new ChartModel
@@ -45,12 +35,12 @@ object ChartBuilder {
       {e: MouseEvent =>
         if (builderData.nonEmpty) {
           val first = builderData.selectedDataSources.items().head
-          first.interpretation match {
-            case i: Info if i.dataType.contains("List") => // TODO: fix data type in metadata
-              forceGraphData.add(new ChartData(builderData.toParams, CustomType, initiallyPaused = true,
+          first.zero match {
+            case _: MutualInfos =>
+              forceGraphData.add(new ChartData(builderData.toParams, initiallyPaused = true,
                 {d: ChartData[MutualInfos] => d.location() = 90000; d.next()}))
-            case Count | Scalar| Time(_) =>
-              timeSeriesData.add(new ChartData(builderData.toParams, Number))
+            case Count(_) | Scalar(_)| Time(_, _) =>
+              timeSeriesData.add(new ChartData(builderData.toParams))
             case _ => // do nothing
           }
         }

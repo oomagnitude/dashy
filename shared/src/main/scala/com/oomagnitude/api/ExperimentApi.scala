@@ -1,6 +1,7 @@
 package com.oomagnitude.api
 
-import com.oomagnitude.metrics.model.{DataSourceId, MetricMetadata, ExperimentRunId, ExperimentId}
+import com.oomagnitude.metrics.model.Metrics._
+import com.oomagnitude.metrics.model.{DataSourceId, ExperimentId, ExperimentRunId}
 
 import scala.concurrent.Future
 import scala.util.Random

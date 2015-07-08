@@ -24,6 +24,8 @@ lazy val dash = crossProject.in(file(".")).
       "com.lihaoyi" %%% "scalatags" % "0.5.2",
       "com.lihaoyi" %%% "upickle" % "0.2.7",
       "com.lihaoyi" %%% "utest" % "0.3.0" % "test",
+      "com.github.japgolly.scalacss" %%% "core" % "0.3.0",
+      "com.github.japgolly.scalacss" %%% "ext-scalatags" % "0.3.0",
       "com.oomagnitude" %%% "metrics-shared" % "0.1-SNAPSHOT"
     ),
     testFrameworks += new TestFramework("utest.runner.Framework")
@@ -39,7 +41,8 @@ lazy val dash = crossProject.in(file(".")).
     libraryDependencies ++= Seq(
       "be.doeraene" %%% "scalajs-jquery" % "0.8.0",
       "org.scala-js" %%% "scalajs-dom" % "0.8.0",
-      "com.lihaoyi" %%% "scalarx" % "0.2.8"
+      "com.lihaoyi" %%% "scalarx" % "0.2.8",
+      "org.spaced.scalajs" %%% "scalajs-d3" % "0.1-SNAPSHOT"
     ),
     jsDependencies ++= Seq(
       // Makes it possible to run the application from the sbt console (i.e., switches runtime to PhantomJS)

@@ -5,10 +5,11 @@ import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.stream.scaladsl._
 import akka.stream.stage.{Context, PushStage, SyncDirective, TerminationDirective}
 import akka.stream.{OverflowStrategy, UniformFanInShape}
-import com.oomagnitude.api.{JsValues, DataPoints}
 import com.oomagnitude.api.StreamControl.StreamControlMessage
+import com.oomagnitude.api.{DataPoints, JsValues}
 import com.oomagnitude.dash.server.actors.{Close, Subscribe}
-import com.oomagnitude.metrics.model.{DataPoint, TimerSample}
+import com.oomagnitude.metrics.model.DataPoint
+import com.oomagnitude.metrics.model.Metrics.{Time, Count}
 import upickle.{Js, Reader, Writer}
 
 object Flows {
@@ -137,7 +138,7 @@ object Flows {
   def parseJs = Flow[String].map(json => upickle.json.read(json))
 
   // TODO: changed grouped to a sliding window
-  def timerFlow = Flow[DataPoint[TimerSample]].grouped(2).collect {
+  def timerFlow = Flow[DataPoint[Time]].grouped(2).collect {
     case samples if samples.size == 2 =>
       val (first, second) =
         if (samples.head.timestep < samples(1).timestep) (samples.head, samples(1))
@@ -146,15 +147,18 @@ object Flows {
       DataPoint(second.timestep, elapsed)
   }
 
+
   // TODO: changed grouped to a sliding window
-  def counterFlow = Flow[DataPoint[Double]].grouped(2).collect {
+  def counterFlow = Flow[DataPoint[Count]].grouped(2).collect {
     case samples if samples.size == 2 =>
       val (first, second) =
         if (samples.head.timestep < samples(1).timestep) (samples.head, samples(1))
         else (samples(1), samples.head)
-      val rate = (second.value - first.value) / (second.timestep - first.timestep).toDouble
+      val rate = (second.value.count - first.value.count) / (second.timestep - first.timestep).toDouble
       DataPoint(second.timestep, rate)
   }
+
+  def toJs[T: Writer] = Flow[T].map(t => upickle.writeJs(t))
 
   /**
    * Throttles all messages passing through it by only allowing no more than one message at each regular interval
