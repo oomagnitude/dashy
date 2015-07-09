@@ -8,8 +8,7 @@ import rx._
 object Resize {
   val resize = Var(0)
   dom.onresize = {e: UIEvent =>
-    println(s"resize event")
-//    resize() = resize() + 1
+    resize() = resize() + 1
   }
 
   def widthOf(element: Element): Rx[Double] = {

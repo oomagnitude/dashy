@@ -21,7 +21,7 @@ object Gabor {
   implicit val gaussianOrdering = new Ordering[LocatableGaussian] {
     override def compare(x: LocatableGaussian, y: LocatableGaussian): Int = x.gaussian.mean.compare(y.gaussian.mean)
   }
-  
+
   def apply(data: ChartData[LabeledGaussians], aspectRatio: Double, params: GaussianParams) = {
     val width = 500
     val height = (width / aspectRatio).toInt
@@ -50,14 +50,10 @@ object Gabor {
   def image(data: List[LocatableGaussian], config: GaussianParams, colorScale: LinearScale[Double, String],
             canvasHeight: Int, canvasWidth: Int) = {
 
-    println(s"available height: $canvasHeight; available width: $canvasWidth")
-
     val heightDomain = (0 to config.geometry.height).toSeq
     val widthDomain = (0 to config.geometry.width).toSeq
     val heightScale = D3Scale.ordinal[Int, Int].domain(heightDomain).rangeRoundBands(0, canvasHeight)
     val widthScale = D3Scale.ordinal[Int, Int].domain(widthDomain.toJSArray).rangeRoundBands(0, canvasWidth)
-    println(s"height domain size: ${config.geometry.height}, width domain size: ${config.geometry.width}")
-    println(s"height band: ${heightScale.rangeBand}; width band: ${widthScale.rangeBand}")
     val sideLength = math.min(heightScale.rangeBand, widthScale.rangeBand).toInt
 
     val opacityScale = D3Scale.linear[Double, Double].domain(Seq(0.0, config.maxPrecision)).range(Seq(0.0, 1.0))
