@@ -32,6 +32,7 @@ object ChartBuilder {
     channel.bind(gaussiansData) {(data: ChartData[LabeledGaussians], remove: () => Unit) =>
       // TODO: extract params in a safe way
       val params = data.params.dataSources.head.parameters.get.asInstanceOf[GaussianParams]
+
       removablePanel(data.params.title, com.oomagnitude.view.Gabor(data, params), {() => data.close(); remove()})
     }
 

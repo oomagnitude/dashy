@@ -30,7 +30,7 @@ object Gabor {
     Obs(data.signal) {
       if (data.signal().nonEmpty) {
         val all = data.signal().head._2.value.gaussians
-        val (min, max) = all.flatMap(_._2).minAndMax
+        val max = all.flatMap(_._2).max
         val colorScale = D3Scale.linear[Double, String].domain(Seq(0.0, max.gaussian.mean)).range(Seq("#000000", "#ffffff"))
 
         svgs() = all.map { case (label, locatables) =>
