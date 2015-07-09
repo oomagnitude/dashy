@@ -3,11 +3,14 @@ package com.oomagnitude.view
 import com.oomagnitude.view.Templates._
 import org.scalajs.dom.raw.HTMLElement
 
+import scalatags.JsDom
 import scalatags.JsDom.all._
+import org.scalajs.dom
 
 object RemovablePanel {
-  def apply(panelTitle: Option[String], body: HTMLElement, removed: () => Unit): HTMLElement = {
+  def apply(panelTitle: Option[String], body: JsDom.Modifier, removed: () => Unit): HTMLElement = {
     val removeBtn =  div(cls:="btn-group pull-right", role:="group", removeButton(removed))
+
 
     val chartPanel =
     if (panelTitle.nonEmpty) {

@@ -14,7 +14,7 @@ object Page {
   def skeleton(boot: String) =
     html(
       head(
-        meta(charset:="utf-8"),
+        meta(charset:="utf-8", name:="viewport", content:="width=device-width, initial-scale=1"),
         Styles.render[TypedTag[String]],
         link(rel:="stylesheet", href:="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.css"),
         link(rel:="stylesheet", href:="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.4/css/bootstrap.min.css"),

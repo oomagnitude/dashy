@@ -7,6 +7,7 @@ import com.oomagnitude.metrics.model.geometry.{Coordinate2D, Geometry2D}
 import com.oomagnitude.rx.Rxs._
 import com.oomagnitude.svg.{Transform => t}
 import com.oomagnitude.view._
+import d3.D3OrdinalScale
 import org.scalajs.dom.html
 import rx._
 
@@ -21,13 +22,6 @@ import scalatags.JsDom.{svgAttrs => sa, svgTags => st}
 @JSExport
 object Gabor {
   val d3 = js.Dynamic.global.d3
-  case class Margin(top: Int, right: Int, bottom: Int, left: Int)
-
-  case class Dimensions(innerHeight: Int, innerWidth: Int, margin: Margin) {
-    val height = innerHeight + margin.top + margin.bottom
-    val width = innerWidth + margin.left + margin.right
-  }
-  case class SvgConfig(dimensions: Dimensions, color: String)
 
   val maxPrecision = 100.0
   val maxValue = 100.0
@@ -52,13 +46,15 @@ object Gabor {
   }
 
   private def squares(data: Rx[LabeledGaussians], config: GaussianParams, canvasHeight: Int, canvasWidth: Int) = {
-    val heightDomain = for {i <- 0 to config.geometry.height} yield i.asInstanceOf[js.Any]
-    val widthDomain = for {i <- 0 to config.geometry.width} yield i.asInstanceOf[js.Any]
-    val heightScale = d3.scale.ordinal().domain(heightDomain.toJSArray).rangeRoundBands(js.Array(0, canvasHeight))
-    val widthScale = d3.scale.ordinal().domain(widthDomain.toJSArray).rangeRoundBands(js.Array(0, canvasWidth))
+    val heightDomain = (0 to config.geometry.height).toSeq
+    val widthDomain = (0 to config.geometry.width).toSeq
+    val heightScale = new D3OrdinalScale[Int, Int]().domain(heightDomain).rangeRoundBands(0, canvasHeight)
+    val widthScale = new D3OrdinalScale[Int, Int]().domain(widthDomain.toJSArray).rangeRoundBands(0, canvasWidth)
+
     val opacityScale = d3.scale.linear().domain(js.Array(0, maxPrecision)).range(js.Array(0, 1))
     val colorScale = d3.scale.linear().domain(js.Array(0, 100)).range(js.Array("#000000", "#ffffff"))
-    val sideLength = math.min(heightScale.rangeBand().asInstanceOf[Double], widthScale.rangeBand().asInstanceOf[Double]).toInt
+
+    val sideLength = math.min(heightScale.rangeBand, widthScale.rangeBand).toInt
 
     Rx {
       data().gaussians.head._2.map { obj =>
