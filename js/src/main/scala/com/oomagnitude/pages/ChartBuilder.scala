@@ -33,7 +33,7 @@ object ChartBuilder {
       // TODO: extract params in a safe way
       val params = data.params.dataSources.head.parameters.get.asInstanceOf[GaussianParams]
 
-      removablePanel(data.params.title, com.oomagnitude.view.Gabor(data, params), {() => data.close(); remove()})
+      removablePanel(data.params.title, com.oomagnitude.view.Gabor(data, aspectRatio = 1, params), {() => data.close(); remove()})
     }
 
     val builderData = new ChartModel

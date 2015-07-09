@@ -1,6 +1,5 @@
 package com.oomagnitude.view
 
-import com.oomagnitude.collection.CollectionExt._
 import com.oomagnitude.css.{Styles => style}
 import com.oomagnitude.metrics.model.Metrics.{GaussianParams, LabeledGaussians}
 import com.oomagnitude.metrics.model.ext.LocatableGaussian
@@ -16,16 +15,16 @@ import scalacss.ScalatagsCss._
 import scalatags.JsDom.all._
 import scalatags.JsDom.{TypedTag, svgAttrs => sa, svgTags => st}
 
-
 object Gabor {
   val d3 = js.Dynamic.global.d3
 
   implicit val gaussianOrdering = new Ordering[LocatableGaussian] {
     override def compare(x: LocatableGaussian, y: LocatableGaussian): Int = x.gaussian.mean.compare(y.gaussian.mean)
   }
-
-  def apply(data: ChartData[LabeledGaussians], params: GaussianParams) = {
-    val dimensions = Dimensions(DefaultHeight, DefaultWidth, Margin(10,10,10,10))
+  
+  def apply(data: ChartData[LabeledGaussians], aspectRatio: Double, params: GaussianParams) = {
+    val width = 500
+    val height = (width / aspectRatio).toInt
     val svgs = Var(List.empty[TypedTag[Div]])
     Obs(data.signal) {
       if (data.signal().nonEmpty) {
@@ -34,12 +33,11 @@ object Gabor {
         val colorScale = D3Scale.linear[Double, String].domain(Seq(0.0, max.gaussian.mean)).range(Seq("#000000", "#ffffff"))
 
         svgs() = all.map { case (label, locatables) =>
-          // TODO: get width and set height accordingly (use aspect ratio)
-          val pixels = image(locatables, params, colorScale, dimensions.height, dimensions.width)
-          bs.col3(
-            div(style.svgContainer,
-              st.svg(style.svgContent, style.greyBackground, sa.viewBox:="0 0 500 500",
-                sa.preserveAspectRatio:="xMinYMin meet", pixels)))
+          val pixels = image(locatables, params, colorScale, height, width)
+          val svg = st.svg(style.greyBackground, sa.viewBox:=s"0 0 $width $height",
+            sa.preserveAspectRatio:="xMinYMin meet", pixels).render
+
+          bs.col3(svg)
         }
       } else {
         svgs() = List.empty
@@ -52,10 +50,14 @@ object Gabor {
   def image(data: List[LocatableGaussian], config: GaussianParams, colorScale: LinearScale[Double, String],
             canvasHeight: Int, canvasWidth: Int) = {
 
+    println(s"available height: $canvasHeight; available width: $canvasWidth")
+
     val heightDomain = (0 to config.geometry.height).toSeq
     val widthDomain = (0 to config.geometry.width).toSeq
     val heightScale = D3Scale.ordinal[Int, Int].domain(heightDomain).rangeRoundBands(0, canvasHeight)
     val widthScale = D3Scale.ordinal[Int, Int].domain(widthDomain.toJSArray).rangeRoundBands(0, canvasWidth)
+    println(s"height domain size: ${config.geometry.height}, width domain size: ${config.geometry.width}")
+    println(s"height band: ${heightScale.rangeBand}; width band: ${widthScale.rangeBand}")
     val sideLength = math.min(heightScale.rangeBand, widthScale.rangeBand).toInt
 
     val opacityScale = D3Scale.linear[Double, Double].domain(Seq(0.0, config.maxPrecision)).range(Seq(0.0, 1.0))
