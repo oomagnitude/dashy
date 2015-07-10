@@ -5,7 +5,8 @@ import com.oomagnitude.metrics.model.{DataPoint, DataSourceId}
 import com.oomagnitude.rx.CallbackRx
 import org.scalajs.dom.raw.MessageEvent
 import rx._
-import upickle.Reader
+import upickle.default._
+import upickle.{default => upickle}
 
 import scala.concurrent.duration._
 

@@ -26,7 +26,7 @@ object ChartBuilder {
       removablePanel(data.params.title, timeSeriesChart(data), {() => data.close(); remove()})
     }
     channel.bind(forceGraphData) {(data: ChartData[MutualInfos], remove: () => Unit) =>
-      removablePanel(data.params.title, md3.forceGraph(data)(md3.forceGraph.mutualInfoToGraph),
+      removablePanel(data.params.title, md3.forceGraph(data, aspectRatio = 2)(md3.forceGraph.mutualInfoToGraph),
         {() => data.close(); remove()})
     }
     channel.bind(gaussiansData) {(data: ChartData[LabeledGaussians], remove: () => Unit) =>

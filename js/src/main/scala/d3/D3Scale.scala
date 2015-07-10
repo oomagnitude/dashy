@@ -2,8 +2,14 @@ package d3
 
 import scala.scalajs.js
 import js.JSConverters._
+import com.oomagnitude.collection.CollectionExt._
 
 object D3Scale extends Scales {
+  val GreenGradient = IndexedSeq("#f7fcfd", "#e5f5f9","#ccece6", "#99d8c9", "#66c2a4", "#41ae76", "#238b45", "#006d2c",
+    "#00441b")
+  val RedGradient = IndexedSeq("#f7fcfd","#e5f5f9","#ccece6", "#99d8c9", "#66c2a4", "#41ae76", "#238b45", "#006d2c",
+    "#00441b")
+
   override def linear[D, R]: LinearScale[D, R] = new D3LinearScale[D, R]()
   override def ordinal[D, R]: OrdinalScale[D, R] = new D3OrdinalScale[D, R]()
   override def identity[D]: IdentityScale[D] = new D3IdentityScale[D]()
@@ -13,6 +19,17 @@ object D3Scale extends Scales {
   override def threshold[D, R]: ThresholdScale[D, R] = new D3ThresholdScale[D, R]()
   override def quantize[D, R]: QuantizeScale[D, R] = new D3QuantizeScale[D, R]()
   override def quantile[D, R]: QuantileScale[D, R] = new D3QuantileScale[D, R]()
+
+  override def colorScale(data: Iterable[Double], colors: Seq[String]): LinearScale[Double, String] = {
+    require(colors.size > 1, s"color scale must provide at least 2 colors for $colors")
+
+    val (min, max) = data.minAndMax
+    val extent = max - min
+    val increment = extent / (colors.size - 1)
+    val domain = colors.indices.map(min + increment * _)
+
+    linear[Double, String].domain(domain).range(colors)
+  }
 }
 
 trait D3ScaleBuilder[S] {

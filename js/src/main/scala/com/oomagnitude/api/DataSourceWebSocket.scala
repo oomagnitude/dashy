@@ -42,7 +42,7 @@ class DataSourceWebSocket(dataSources: List[DataSourceId],
 
   private def send(message: StreamControlMessage): Unit = {
     if (webSocket.readyState == Open) {
-      webSocket.send(upickle.write(message))
+      webSocket.send(StreamControl.write(message))
     }
   }
 }

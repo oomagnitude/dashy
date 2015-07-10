@@ -1,5 +1,7 @@
 package com.oomagnitude.api
 
+import upickle.{default => upickle}
+
 object StreamControl {
   sealed trait StreamControlMessage
   sealed trait MetricMode extends StreamControlMessage
@@ -53,4 +55,7 @@ object StreamControl {
    *               approximately every 200ms, a new data point will be sent to the client
    */
   case class Frequency(millis: Int) extends StreamControlMessage
+
+  def write(message: StreamControlMessage): String = upickle.write(message)
+  def read(message: String): StreamControlMessage = upickle.read[StreamControlMessage](message)
 }

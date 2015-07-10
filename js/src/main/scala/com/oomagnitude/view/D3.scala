@@ -1,38 +1,18 @@
 package com.oomagnitude.view
 
 import com.oomagnitude.api.DataPoints
-import com.oomagnitude.collection.CollectionExt._
 import com.oomagnitude.metrics.model.Metrics.MutualInfos
 import com.oomagnitude.model.ChartData
+import d3.D3Scale
 import org.scalajs.dom.html
 import rx._
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
-import scala.scalajs.js.JSON
 import scalatags.JsDom.all._
-
 
 object D3 {
   private val d3 = js.Dynamic.global.d3
-
-  val GreenGradient = IndexedSeq("#f7fcfd", "#e5f5f9","#ccece6", "#99d8c9", "#66c2a4", "#41ae76", "#238b45", "#006d2c",
-    "#00441b")
-  val RedGradient = IndexedSeq("#f7fcfd","#e5f5f9","#ccece6", "#99d8c9", "#66c2a4", "#41ae76", "#238b45", "#006d2c",
-    "#00441b")
-
-  private def colorScale[T: Ordering](data: Iterable[T], colors: Seq[String])(toNumber: T => Double): js.Dynamic = {
-    require(colors.size > 1, s"color scale must provide at least 2 colors for ${JSON.stringify(colors)}")
-
-    val (min, max) = data.minAndMax
-    val extent = toNumber(max) - toNumber(min)
-    val increment = extent / (colors.size - 1)
-    val domain = colors.indices.map(toNumber(min) + increment * _)
-
-    d3.scale.linear()
-      .domain(domain.toJSArray)
-      .range(colors.toJSArray)
-  }
 
   object forceGraph {
     case class Node(name: String, group: Int) {
@@ -53,7 +33,7 @@ object D3 {
       Graph(nodes, links)
     }
 
-    def apply[T](data: ChartData[T])(implicit convert: DataPoints[T] => Graph): html.Element = {
+    def apply[T](data: ChartData[T], aspectRatio: Double)(implicit convert: DataPoints[T] => Graph): html.Element = {
       implicit val nodeOrdering = new Ordering[Node] {
         override def compare(x: Node, y: Node): Int = x.group.compare(y.group)
       }
@@ -66,7 +46,9 @@ object D3 {
         .size(js.Array(width, height))
 
       val container = div().render
-      val svg = d3.select(container).append("com/oomagnitude/svg")
+
+      // TODO: instead use: Svg(aspectRatio)(styles.greyBackground)
+      val svg = d3.select(container).append("svg")
         .attr("width", width)
         .attr("height", height)
         .style("background-color", "#d8d8d8")
@@ -81,7 +63,7 @@ object D3 {
 
       Obs(data.signal, skipInitial = true) {
         val graph: Graph = data.signal()
-        val colorGradient = colorScale(graph.nodes, GreenGradient){(d: Node) => d.group}
+        val colorGradient = D3Scale.colorScale(graph.nodes.map(_.group.toDouble), D3Scale.GreenGradient)
         val nodes = graph.nodes.toJSArray.map(_.toJs)
         val links = graph.links.toJSArray.map(_.toJs)
 
@@ -97,7 +79,7 @@ object D3 {
           .enter().append("circle")
           .attr("class", "node")
           .attr("r", 5)
-          .style("fill", { d: js.Dynamic => colorGradient(d.group) })
+          .style("fill", { d: js.Dynamic => colorGradient(d.group.asInstanceOf[Double]) })
           .on("mouseover", tip.show)
           .on("mouseout", tip.hide)
           .call(force.drag)

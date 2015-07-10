@@ -6,11 +6,12 @@ import akka.stream.scaladsl._
 import akka.stream.stage.{Context, PushStage, SyncDirective, TerminationDirective}
 import akka.stream.{OverflowStrategy, UniformFanInShape}
 import com.oomagnitude.api.StreamControl.StreamControlMessage
-import com.oomagnitude.api.{DataPoints, JsValues}
+import com.oomagnitude.api.{StreamControl, DataPoints, JsValues}
 import com.oomagnitude.dash.server.actors.{Close, Subscribe}
 import com.oomagnitude.metrics.model.DataPoint
-import com.oomagnitude.metrics.model.Metrics.{Time, Count}
-import upickle.{Js, Reader, Writer}
+import com.oomagnitude.metrics.model.Metrics.{Count, Time}
+import upickle._
+import upickle.default._
 
 object Flows {
   import scala.concurrent.duration._
@@ -31,16 +32,16 @@ object Flows {
   def parseControlMessage = Flow[Message].map[StreamControlMessage] {
     case msg: TextMessage.Strict =>
       // TODO: expose or handle exceptions thrown here. Right now they are being swallowed.
-      upickle.read[StreamControlMessage](msg.text)
+      StreamControl.read(msg.text)
     case msg: Message =>
       throw new UnsupportedOperationException(s"message $msg not supported")
   }
 
-  def serializeDataPoint[T: Writer] = Flow[DataPoints[T]].map(dp => upickle.write(dp))
+  def serializeDataPoint[T: Writer] = Flow[DataPoints[T]].map(dp => write(dp))
 
   def jsValuesToMessage = Flow[JsValues].map { jsValues =>
     val js = Js.Arr(jsValues.toSeq.map {
-      case (id, jsval) => Js.Arr(upickle.writeJs(id), jsval)
+      case (id, jsval) => Js.Arr(writeJs(id), jsval)
     }: _*)
     upickle.json.write(js)
   }
@@ -133,12 +134,11 @@ object Flows {
     }
   }
 
-  def parseJson[T: Reader] = Flow[String].map(json => upickle.read[T](json))
+  def parseJson[T: Reader] = Flow[String].map(json => read[T](json))
 
   def parseJs = Flow[String].map(json => upickle.json.read(json))
 
-  // TODO: changed grouped to a sliding window
-  def timerFlow = Flow[DataPoint[Time]].grouped(2).collect {
+  def timerFlow = Flow[DataPoint[Time]].transform(() => SlidingWindow[DataPoint[Time]](2)).collect {
     case samples if samples.size == 2 =>
       val (first, second) =
         if (samples.head.timestep < samples(1).timestep) (samples.head, samples(1))
@@ -147,9 +147,7 @@ object Flows {
       DataPoint(second.timestep, elapsed)
   }
 
-
-  // TODO: changed grouped to a sliding window
-  def counterFlow = Flow[DataPoint[Count]].grouped(2).collect {
+  def counterFlow = Flow[DataPoint[Count]].transform(() => SlidingWindow[DataPoint[Count]](2)).collect {
     case samples if samples.size == 2 =>
       val (first, second) =
         if (samples.head.timestep < samples(1).timestep) (samples.head, samples(1))
@@ -158,7 +156,7 @@ object Flows {
       DataPoint(second.timestep, rate)
   }
 
-  def toJs[T: Writer] = Flow[T].map(t => upickle.writeJs(t))
+  def toJs[T: Writer] = Flow[T].map(t => writeJs(t))
 
   /**
    * Throttles all messages passing through it by only allowing no more than one message at each regular interval

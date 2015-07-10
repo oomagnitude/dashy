@@ -1,5 +1,7 @@
 package d3
 
+// TODO: put this stuff into a separate library
+
 trait Invertible[D, R] {
   def invert(y: R): D
 }
@@ -116,4 +118,5 @@ trait Scales {
   def threshold[D, R]: ThresholdScale[D, R]
   def quantize[D, R]: QuantizeScale[D, R]
   def quantile[D, R]: QuantileScale[D, R]
+  def colorScale(data: Iterable[Double], colors: Seq[String]): LinearScale[Double, String]
 }

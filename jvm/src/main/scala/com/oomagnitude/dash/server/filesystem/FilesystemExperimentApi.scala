@@ -7,6 +7,7 @@ import com.oomagnitude.api.ExperimentApi
 import com.oomagnitude.metrics.filesystem._
 import com.oomagnitude.metrics.model.Metrics.MetricMetadata
 import com.oomagnitude.metrics.model.{DataSourceId, ExperimentId, ExperimentRunId}
+import upickle.default._
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -27,14 +28,14 @@ class FilesystemExperimentApi(implicit executionContext: ExecutionContextExecuto
 
   override def dataSources(id: ExperimentRunId): Future[List[MetricMetadata]] = {
     val listing = filteredListing(id.metricsPath) {(dir, name) => name.toLowerCase.endsWith(".meta")}
-    listing.flatMap(getAllContents).map(_.map(json => upickle.read[MetricMetadata](json)))
+    listing.flatMap(getAllContents).map(_.map(json => read[MetricMetadata](json)))
   }
 
   override def metadata(dataSources: List[DataSourceId]): Future[List[MetricMetadata]] = {
     Future.sequence(dataSources.map { id =>
       Future {
         val source = io.Source.fromFile(id.toMetaPath.toFile)
-        try upickle.read[MetricMetadata](source.getLines().mkString) finally source.close()
+        try read[MetricMetadata](source.getLines().mkString) finally source.close()
       }
     })
   }

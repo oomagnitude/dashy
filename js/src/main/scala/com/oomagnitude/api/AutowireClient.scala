@@ -2,6 +2,7 @@ package com.oomagnitude.api
 
 import org.scalajs.dom
 import scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import upickle.{default => upickle}
 
 import scala.concurrent.Future
 

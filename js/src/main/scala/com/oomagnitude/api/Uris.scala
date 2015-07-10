@@ -2,6 +2,7 @@ package com.oomagnitude.api
 
 import com.oomagnitude.metrics.model.DataSourceId
 import org.scalajs.dom
+import upickle.{default => upickle}
 
 import scala.scalajs.js
 

@@ -22,7 +22,7 @@ lazy val dash = crossProject.in(file(".")).
     libraryDependencies ++= Seq(
       "com.lihaoyi" %%% "autowire" % "0.2.5",
       "com.lihaoyi" %%% "scalatags" % "0.5.2",
-      "com.lihaoyi" %%% "upickle" % "0.2.7",
+      "com.lihaoyi" %%% "upickle" % "0.3.0",
       "com.lihaoyi" %%% "utest" % "0.3.0" % "test",
       "com.github.japgolly.scalacss" %%% "core" % "0.3.0",
       "com.github.japgolly.scalacss" %%% "ext-scalatags" % "0.3.0",

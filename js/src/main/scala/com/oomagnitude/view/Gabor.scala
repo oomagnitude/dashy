@@ -1,13 +1,13 @@
 package com.oomagnitude.view
 
 import com.oomagnitude.css.{Styles => style}
-import com.oomagnitude.metrics.model.Metrics.{GaussianParams, LabeledGaussians}
-import com.oomagnitude.metrics.model.ext.LocatableGaussian
+import com.oomagnitude.metrics.model.Metrics._
 import com.oomagnitude.model.ChartData
 import com.oomagnitude.rx.Rxs._
 import d3.{D3Scale, LinearScale}
 import org.scalajs.dom.html.Div
 import rx._
+import svg.Svg
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
@@ -26,18 +26,18 @@ object Gabor {
     val width = 500
     val height = (width / aspectRatio).toInt
     val svgs = Var(List.empty[TypedTag[Div]])
+
     Obs(data.signal) {
       if (data.signal().nonEmpty) {
         val all = data.signal().head._2.value.gaussians
         val max = all.flatMap(_._2).max
-        val colorScale = D3Scale.linear[Double, String].domain(Seq(0.0, max.gaussian.mean)).range(Seq("#000000", "#ffffff"))
+        val colorScale = D3Scale.linear[Double, String]
+          .domain(Seq(0.0, max.gaussian.mean))
+          .range(Seq("#000000", "#ffffff"))
 
-        svgs() = all.map { case (label, locatables) =>
+        svgs() = all.map { case (_, locatables) =>
           val pixels = image(locatables, params, colorScale, height, width)
-          val svg = st.svg(style.greyBackground, sa.viewBox:=s"0 0 $width $height",
-            sa.preserveAspectRatio:="xMinYMin meet", pixels).render
-
-          bs.col3(svg)
+          bs.col3(Svg(aspectRatio)(style.salmonBackground, pixels))
         }
       } else {
         svgs() = List.empty

@@ -19,6 +19,7 @@ import com.oomagnitude.metrics.model._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor}
+import upickle.{default => upickle}
 
 object Server {
   val JvmRoot = Paths.get(".")
@@ -45,14 +46,6 @@ class Server(api: ExperimentApi)(implicit fm: FlowMaterializer, system: ActorSys
           )
         }
       } ~
-        path("gabor") {
-          complete {
-            HttpEntity(
-              MediaTypes.`text/html`,
-              "<!DOCTYPE html>\n" + Page.skeleton(Page.GaborBoot).render
-            )
-          }
-        } ~
         // Scala-JS puts them in the root of the resource directory per default,
         // so that's where we pick them up
         pathPrefix("js") {
