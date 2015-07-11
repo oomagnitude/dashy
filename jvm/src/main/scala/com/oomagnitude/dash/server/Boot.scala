@@ -2,7 +2,7 @@ package com.oomagnitude.dash.server
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.stream.ActorFlowMaterializer
+import akka.stream.ActorMaterializer
 import com.oomagnitude.dash.server.filesystem.FilesystemExperimentApi
 
 import scala.util.{Failure, Success}
@@ -10,7 +10,7 @@ import scala.util.{Failure, Success}
 object Boot extends App {
   implicit val system = ActorSystem()
   import system.dispatcher
-  implicit val materializer = ActorFlowMaterializer()
+  implicit val materializer = ActorMaterializer()
 
   val config = system.settings.config
   val interface = config.getString("app.interface")

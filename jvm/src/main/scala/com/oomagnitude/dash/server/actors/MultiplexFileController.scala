@@ -3,7 +3,7 @@ package com.oomagnitude.dash.server.actors
 import java.nio.file.Path
 
 import akka.actor.{Actor, Cancellable, PoisonPill, Props}
-import akka.stream.FlowMaterializer
+import akka.stream.Materializer
 import akka.stream.scaladsl.{Flow, Sink}
 import com.oomagnitude.dash.server.actors.IndexedFileReader.Advance
 import com.oomagnitude.dash.server.actors.MultiplexFileController._
@@ -20,12 +20,12 @@ object MultiplexFileController {
   val DefaultBufferSize = 65536
 
   def props[K, V](sources: Iterable[StreamSource[K, V]], config: StreamConfig)(
-      implicit ec: ExecutionContext, fm: FlowMaterializer) =
+      implicit ec: ExecutionContext, fm: Materializer) =
     Props(classOf[MultiplexFileController[K, V]], sources, config, ec, fm)
 }
 
 class MultiplexFileController[K, V](sources: Iterable[StreamSource[K, V]], defaultConfig: StreamConfig,
-                           ec: ExecutionContext, fm: FlowMaterializer) extends Actor with Subscribable {
+                           ec: ExecutionContext, fm: Materializer) extends Actor with Subscribable {
   implicit val executionContext = ec
   implicit val bufferSize = 100
   implicit val flowMaterializer = fm

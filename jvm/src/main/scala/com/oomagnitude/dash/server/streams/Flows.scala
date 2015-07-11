@@ -80,7 +80,7 @@ object Flows {
         // 1. source of flow's materialized value (i.e., the actor source)
         // 2. source of incoming messages
         // 3. merge #1 and #2 into one stream and direct it to the external actor
-        b.matValue ~> Flow[ActorRef].map(Subscribe) ~> merge.in(0)
+        b.materializedValue ~> Flow[ActorRef].map(Subscribe) ~> merge.in(0)
                                                        merge ~> dispatch
 
         (merge.in(1), responseSource.outlet)

@@ -14,10 +14,10 @@ lazy val dash = crossProject.in(file(".")).
   settings(
     name := "scalajs-dashboard",
     version := "0.1-SNAPSHOT",
-    scalaVersion := "2.11.6",
+    scalaVersion := "2.11.7",
     scalacOptions ++= Seq("-deprecation","-feature","-Xlint"),
-    resolvers += "karchedon-repo" at "http://maven.karchedon.de/",
-    resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+//    resolvers += "karchedon-repo" at "http://maven.karchedon.de/",
+//    resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     unmanagedSourceDirectories in Compile += baseDirectory.value  / "shared" / "main" / "scala",
     libraryDependencies ++= Seq(
       "com.lihaoyi" %%% "autowire" % "0.2.5",
@@ -33,16 +33,17 @@ lazy val dash = crossProject.in(file(".")).
   .jvmSettings(
     // Add JVM-specific settings here
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-http-scala-experimental" % "1.0-RC2",
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value)
+      "com.typesafe.akka" %% "akka-http-experimental" % "1.0-RC4",
+      "com.typesafe.akka" %% "akka-stream-experimental" % "1.0-RC4"
+    )
   )
   .jsSettings(
     skip in packageJSDependencies := false,
     libraryDependencies ++= Seq(
       "be.doeraene" %%% "scalajs-jquery" % "0.8.0",
       "org.scala-js" %%% "scalajs-dom" % "0.8.0",
-      "com.lihaoyi" %%% "scalarx" % "0.2.8",
-      "org.spaced.scalajs" %%% "scalajs-d3" % "0.1-SNAPSHOT"
+      "com.lihaoyi" %%% "scalarx" % "0.2.8"//,
+//      "org.spaced.scalajs" %%% "scalajs-d3" % "0.1-SNAPSHOT"
     ),
     jsDependencies ++= Seq(
       // Makes it possible to run the application from the sbt console (i.e., switches runtime to PhantomJS)

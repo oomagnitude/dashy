@@ -6,7 +6,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.marshalling.ToResponseMarshallable._
 import akka.http.scaladsl.model.{HttpEntity, MediaTypes, RequestEntity}
 import akka.http.scaladsl.server.Directives
-import akka.stream.FlowMaterializer
+import akka.stream.Materializer
 import com.oomagnitude.api.StreamControl.Resume
 import com.oomagnitude.api._
 import com.oomagnitude.dash.server.actors.MultiplexFileController
@@ -16,10 +16,10 @@ import com.oomagnitude.dash.server.streams.Flows
 import com.oomagnitude.metrics.filesystem._
 import com.oomagnitude.metrics.model.Metrics._
 import com.oomagnitude.metrics.model._
+import upickle.{default => upickle}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor}
-import upickle.{default => upickle}
 
 object Server {
   val JvmRoot = Paths.get(".")
@@ -29,7 +29,7 @@ object Server {
   val CssOutput = JsRoot.resolve("classes").resolve("css")
 }
 
-class Server(api: ExperimentApi)(implicit fm: FlowMaterializer, system: ActorSystem,
+class Server(api: ExperimentApi)(implicit fm: Materializer, system: ActorSystem,
                                  executor: ExecutionContextExecutor) extends Directives {
   import Flows._
   import Server._

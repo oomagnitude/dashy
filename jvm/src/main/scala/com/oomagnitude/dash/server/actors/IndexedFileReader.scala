@@ -72,6 +72,7 @@ class IndexedFileReader(path: Path,
     close()
   }
 
+  // TODO: BUG: when the end of the stream is reached, it wraps around back to the beginning
   private def seek(destination: Long): Option[String] = {
     if (reader.isEmpty) open()
 
