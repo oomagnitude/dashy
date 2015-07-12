@@ -1,5 +1,9 @@
 package d3
 
+import org.scalajs.dom
+import rx._
+
+import scala.scalajs.js
 
 /**
  * [[https://github.com/mbostock/d3/wiki/Layouts]]
@@ -30,7 +34,7 @@ trait Layout {
    * [[https://github.com/mbostock/d3/wiki/Force-Layout]]
    * @return
    */
-  def force[N <: Identifiable[String], L <: Linkable[String]]: ForceLayout[N, L]
+  def force: ForceLayout
 
   /**
    * derive a custom hierarchical layout implementation
@@ -88,39 +92,43 @@ trait ClusterLayout
 /**
  * [[https://github.com/mbostock/d3/wiki/Force-Layout#nodes]]
  */
-case class Node(index: Int, x: Double, y: Double, px: Double, py: Double, fixed: Option[Boolean], weight: Int)
-//case class Link(source: Node, target: Node)
-//case class ForceTick[N, L](alpha: Double, nodes: IndexedSeq[(Node, N)], links: Iterable[(Link, L)])
 
-trait Graph[N <: Identifiable[String], L <: Linkable[String]] {
-  def lookup(id: String): Option[(Node, N)]
-  def nodes: IndexedSeq[(Node, N)]
-  def links: Iterable[L]
+trait JsNode extends js.Object {
+  def index: Int = js.native
+  def id: String = js.native
+  def x: Double = js.native
+  def y: Double = js.native
+  def px: Double = js.native
+  def py: Double = js.native
+  def fixed: Option[Boolean] = js.native
+  def weight: Int = js.native
 }
 
-trait Identifiable[Id] {
-  def id: Id
+trait JsLink extends js.Object {
+  def source: JsNode = js.native
+  def target: JsNode = js.native
 }
 
-trait Linkable[Id] {
-  def sourceId: Id
-  def targetId: Id
+class Point(val x: Var[Option[Double]], val y: Var[Option[Double]]) {
+  def this() = this(Var(None), Var(None))
+
+  def update(nx: Double, ny: Double): Unit = {
+    x() = Some(nx); y() = Some(ny)
+  }
 }
+
+class Line(val source: Point, val target: Point)
 
 /**
  * [[https://github.com/mbostock/d3/wiki/Force-Layout]]
  */
-trait ForceLayout[N <: Identifiable[String], L <: Linkable[String]] {
-  
-  def data(nodes: IndexedSeq[N], links: IndexedSeq[L]): ForceLayout[N, L]
-  def size(width: Double, height: Double): ForceLayout[N, L]
-  def size: (Double, Double)
-  def linkStrength(strength: Double): ForceLayout[N, L]
-  def linkStrength: Double
-  def friction(friction: Double): ForceLayout[N, L]
-  def friction: Double
+trait ForceLayout {
 
-  def linkDistance(distance: Double): ForceLayout[N, L]
+  // 1. bind position of nodes and links to Var(Option[Double]), using array index as the "ID"
+  def init(numNodes: Int, linkIndexes: IndexedSeq[(Int, Int)]): ForceLayout
+  
+  def points: IndexedSeq[Point]
+  def lines: IndexedSeq[Line]
 
   /**
    * [[https://github.com/mbostock/d3/wiki/Force-Layout#linkDistance]]
@@ -129,21 +137,38 @@ trait ForceLayout[N <: Identifiable[String], L <: Linkable[String]] {
    *                 this context as the force layout; the function's return value is then used to set each link's
    *                 distance. The function is evaluated whenever the layout starts.
    */
-  def linkDistance(distance: L => Double): ForceLayout[N, L]
+  // 2. set link distance using (JsLink, Int) => Double, where Int is the index of the Link object
+  def linkDistance(distance: (JsLink, Int) => Double): ForceLayout
+
+  // 3. set drag force on a given list of nodes, where length of nodes and position matches data internally
+  def drag(elements: IndexedSeq[dom.Node]): ForceLayout
+
+
+//  def data(nodes: IndexedSeq[N], links: IndexedSeq[L]): ForceLayout
+  def size(width: Double, height: Double): ForceLayout
+  def size: (Double, Double)
+  def linkStrength(strength: Double): ForceLayout
+  def linkStrength: Double
+  def friction(friction: Double): ForceLayout
+  def friction: Double
+
+  def linkDistance(distance: Double): ForceLayout
+
+//  def linkDistance(distance: L => Double): ForceLayout
 
   def linkDistance: Double
-  def charge(charge: Double): ForceLayout[N, L]
-  def gravity(gravity: Double): ForceLayout[N, L]
-  def theta(theta: Double): ForceLayout[N, L]
-  def alpha(alpha: Double): ForceLayout[N, L]
+  def charge(charge: Double): ForceLayout
+  def gravity(gravity: Double): ForceLayout
+  def theta(theta: Double): ForceLayout
+  def alpha(alpha: Double): ForceLayout
 
-  def onTick(fn: (Graph[N, L], Double) => Unit): ForceLayout[N, L]
+//  def onTick(fn: (Graph, Double) => Unit): ForceLayout
 
   def start(): Unit
 
-  // TODO: come up with a type for this. It should be a function that takes the current (d3) selection as input and returns Unit. It can also take optional arguments
-  def drag: scalajs.js.Dynamic
-  def node(id: String): Option[scalajs.js.Dynamic]
+//  // TODO: come up with a type for this. It should be a function that takes the current (d3) selection as input and returns Unit. It can also take optional arguments
+//  def drag: scalajs.js.Dynamic
+//  def node(id: String): Option[scalajs.js.Dynamic]
 }
 
 trait HierarchyLayout

@@ -1,9 +1,10 @@
 package d3
 
+import org.scalajs.dom
+
 import scala.scalajs.js
+import scala.scalajs.js.Dynamic.literal
 import scala.scalajs.js.JSConverters._
-import com.oomagnitude.js._
-import js.Dynamic.literal
 
 object D3Layout extends Layout {
   /**
@@ -67,7 +68,7 @@ object D3Layout extends Layout {
    * [[https://github.com/mbostock/d3/wiki/Force-Layout]]
    * @return
    */
-  override def force[N <: Identifiable[String], L <: Linkable[String]]: ForceLayout[N, L] = new D3ForceLayout[N, L]
+  override def force: ForceLayout = new D3ForceLayout
 
   /**
    * recursively partition a node tree into a sunburst or icicle.
@@ -82,115 +83,88 @@ object D3Layout extends Layout {
   override def histogram: HistogramLayout = ???
 }
 
-object D3GraphState {
-  def empty[N <: Identifiable[String], L <: Linkable[String]] = new D3GraphState[N, L](IndexedSeq.empty, IndexedSeq.empty)
-}
-
-class D3GraphState[N <: Identifiable[String], L <: Linkable[String]](val nodeData: IndexedSeq[N], override val links: IndexedSeq[L]) extends Graph[N, L] {
-  val nodeIdToIndex = nodeData.zipWithIndex.map { case (n, i) => n.id -> i }.toMap
-  val indexToNodeId = nodeIdToIndex.map(_.swap)
-  val linkIdToIndex = links.zipWithIndex.map {case (l, i) => linkId(l) -> i}.toMap
-  val indexToLinkId = linkIdToIndex.map(_.swap)
-
-  val jsNodes = nodeData.zipWithIndex.map {case (nodeData, index) => literal(index = index, id = nodeData.id)}.toJSArray
-
-  val jsLinks = links.map(
-    l =>
-      literal(
-        source = nodeIdToIndex(l.sourceId),
-        target = nodeIdToIndex(l.targetId),
-        linkId = linkId(l))
-  ).toJSArray
-
-  private def linkId(link: L) = s"${link.sourceId}|${link.targetId}"
-
-  def graphNodes = jsNodes.map { d =>
-    val fixed = d.fixed.toOption[Boolean]
-    Node(d.index.asInstanceOf[Int], d.x.asInstanceOf[Double], d.y.asInstanceOf[Double],
-    d.px.asInstanceOf[Double], d.py.asInstanceOf[Double], fixed, d.weight.asInstanceOf[Int])}.toIndexedSeq
-
-  override def lookup(id: String): Option[(Node, N)] = {
-    val index = nodeIdToIndex(id)
-    val node = graphNodes(index)
-    // TODO: check for out of bounds
-    Some((node, nodeData(index)))
-  }
-
-  override def nodes: IndexedSeq[(Node, N)] = graphNodes.zip(nodeData)
-}
-
-class D3ForceLayout[N <: Identifiable[String], L <: Linkable[String]] extends ForceLayout[N, L] {
-  private[this] var state = D3GraphState.empty[N, L]
+class D3ForceLayout extends ForceLayout {
   private[this] val layout: js.Dynamic = d3.layout.force()
 
-  override def data(nodes: IndexedSeq[N], links: IndexedSeq[L]): ForceLayout[N, L] = {
-    state = new D3GraphState[N, L](nodes, links)
-    layout.nodes(state.jsNodes).links(state.jsLinks)
-    this
-  }
+  private[this] var _points = IndexedSeq.empty[Point]
+  private[this] var _lines = IndexedSeq.empty[Line]
+  private[this] var jsNodes = js.Array[js.Object with js.Dynamic]()
+  private[this] var jsLinks = js.Array[js.Object with js.Dynamic]()
 
-  override def onTick(fn: (Graph[N, L], Double) => Unit): ForceLayout[N, L] = {
+  // 1. bind position of nodes and links to Var(Option[Double]), using array index as the "ID"
+  override def init(numNodes: Int, linkIndexes: IndexedSeq[(Int, Int)]): ForceLayout = {
+    require(numNodes > 0, s"number of nodes ($numNodes) must be a positive number")
+    require(linkIndexes.forall { case (i, j) => i >= 0 && i < numNodes && j >= 0 && j < numNodes},
+      s"link indexes must be between 0 and $numNodes ($linkIndexes)")
+
+    _points = (0 until numNodes).toIndexedSeq.map(_ => new Point())
+    jsNodes = (0 until numNodes).map(i => literal(index = i)).toJSArray
+    _lines = linkIndexes.map{case (source, target) => new Line(_points(source), _points(target))}
+    jsLinks = linkIndexes.map{case (source, target) => literal(source = source, target = target)}.toJSArray
+    layout.nodes(jsNodes).links(jsLinks)
+    
     layout.on("tick", { (event: js.Dynamic) =>
-      // TODO:  An undefined behavior was detected: undefined is not an instance of java.lang.Boolean
-      // event.alpha.asInstanceOf[Double]
-      fn(state, 0.0)
+      _points.zipWithIndex.foreach {
+        case (point, index) =>
+          val node = jsNodes(index).asInstanceOf[JsNode]
+          point.update(node.x, node.y)
+      }
     })
     this
   }
 
-  override def charge(charge: Double): ForceLayout[N, L] = {
+  override def points: IndexedSeq[Point] = _points
+
+  override def lines: IndexedSeq[Line] = _lines
+
+  // 3. set drag force on a given list of nodes, where length of nodes and position matches data internally
+  override def drag(elements: IndexedSeq[dom.Node]): ForceLayout = {
+    elements.zipWithIndex.foreach {
+      case (node, index) =>
+        d3.select(node).datum(jsNodes(index)).call(layout.drag)
+    }
+    this
+  }
+
+  override def linkDistance(distance: (JsLink, Int) => Double): ForceLayout = {
+    layout.linkDistance({
+      (l: js.Dynamic, index: Int) =>
+        val link = jsLinks(index).asInstanceOf[JsLink]
+        distance(link, index)
+    })
+    this
+  }
+
+  override def charge(charge: Double): ForceLayout = {
     layout.charge(charge)
     this
   }
 
   override def friction: Double = ???
 
-  override def friction(friction: Double): ForceLayout[N, L] = ???
+  override def friction(friction: Double): ForceLayout = ???
 
-  override def alpha(alpha: Double): ForceLayout[N, L] = ???
+  override def alpha(alpha: Double): ForceLayout = ???
 
-  override def gravity(gravity: Double): ForceLayout[N, L] = ???
+  override def gravity(gravity: Double): ForceLayout = ???
 
-  override def linkStrength(strength: Double): ForceLayout[N, L] = ???
+  override def linkStrength(strength: Double): ForceLayout = ???
 
   override def linkStrength: Double = ???
 
-  override def size(width: Double, height: Double): ForceLayout[N, L] = {
+  override def size(width: Double, height: Double): ForceLayout = {
     layout.size(js.Array(width, height))
     this
   }
 
   override def size: (Double, Double) = ???
 
-  override def theta(theta: Double): ForceLayout[N, L] = ???
+  override def theta(theta: Double): ForceLayout = ???
 
-  override def linkDistance(distance: Double): ForceLayout[N, L] = ???
+  override def linkDistance(distance: Double): ForceLayout = ???
 
   override def linkDistance: Double = layout.linkDistance().asInstanceOf[Double]
 
-
-  /**
-   * [[https://github.com/mbostock/d3/wiki/Force-Layout#linkDistance]]
-   *
-   * the function is evaluated for each link (in order), being passed the link and its index, with the
-   * this context as the force layout; the function's return value is then used to set each link's
-   * distance. The function is evaluated whenever the layout starts.
-   */
-  override def linkDistance(distance: (L) => Double): ForceLayout[N, L] = {
-    layout.linkDistance({
-      l: js.Dynamic =>
-        val link = state.links(state.linkIdToIndex(l.linkId.asInstanceOf[String]))
-        distance(link)
-    })
-    this
-  }
-
   override def start(): Unit = layout.start()
 
-  override def drag: js.Dynamic = layout.drag
-
-  override def node(id: String): Option[js.Dynamic] = {
-    val index = state.nodeIdToIndex.get(id)
-    index.map(state.jsNodes)
-  }
 }

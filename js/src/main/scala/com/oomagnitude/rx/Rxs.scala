@@ -32,6 +32,18 @@ object Rxs {
     }
   }
 
+  implicit class ElementOps(element: dom.Element) {
+    def bind[T](attr: Attr, item: Rx[Option[T]]): dom.Element = {
+      Obs(item) {
+        item() match {
+          case None => element.removeAttribute(attr.name)
+          case Some(t) => element.setAttribute(attr.name, t.toString)
+        }
+      }
+      element
+    }
+  }
+
   implicit class RxListOps[T](items: Rx[List[T]])(implicit tToFrag: T => Frag) {
     def asFrags(postAppend: dom.Node => Unit): Frag = {
       def children = {

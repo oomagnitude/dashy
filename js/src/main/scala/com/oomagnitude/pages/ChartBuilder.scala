@@ -5,7 +5,6 @@ import com.oomagnitude.css.Styles
 import com.oomagnitude.metrics.model.Metrics._
 import com.oomagnitude.model.{ChartData, ChartModel, ListWithId}
 import com.oomagnitude.rx.Rxs
-import com.oomagnitude.view.ForceGraph.{CellInfoWithId, MutualInfoWithId}
 import com.oomagnitude.view._
 import d3.D3Scale
 import org.scalajs.dom.html
@@ -14,7 +13,7 @@ import org.scalajs.dom.raw.MouseEvent
 import scala.scalajs.js.annotation.JSExport
 import scalacss.ScalatagsCss._
 import scalatags.JsDom.all._
-import scalatags.JsDom.{svgAttrs => sa, svgTags => st}
+import scalatags.JsDom.{svgAttrs => sa}
 
 
 @JSExport
@@ -32,21 +31,21 @@ object ChartBuilder {
       removablePanel(data.params.title, timeSeriesChart(data), {() => data.close(); remove()})
     }
     channel.bind(forceGraphData) {(data: ChartData[MutualInfos], remove: () => Unit) =>
-      removablePanel(data.params.title, forceGraph[MutualInfos, CellInfoWithId, MutualInfoWithId](data,
+      removablePanel(data.params.title, forceGraph[MutualInfos, CellInfo, MutualInfo](data,
           aspectRatio = 2,
           linkDistance = { (width: Double, height: Double) =>
 
-            {m: MutualInfoWithId => (1.0 - m.ejc) * (height / 2)}
+            {m: MutualInfo => (1.0 - m.ejc) * (height / 2)}
           },
-          nodeStyle = { cells: Iterable[CellInfoWithId] =>
+          nodeStyle = { cells: Iterable[CellInfo] =>
             val colorScale = D3Scale.colorScale(cells.map(_.numConnections.toDouble), D3Scale.GreenGradient)
 
-            {cell: CellInfoWithId => List(Styles.graphNode, sa.fill := colorScale(cell.numConnections))}
+            {cell: CellInfo => List(Styles.graphNode, sa.fill := colorScale(cell.numConnections), title:=cell.id)}
           },
-          linkStyle = { mutualInfos: Iterable[MutualInfoWithId] =>
+          linkStyle = { mutualInfo: Iterable[MutualInfo] =>
 
-            {mutualInfo: MutualInfoWithId => List(Styles.graphLink)}
-          })(forceGraph.mutualInfoToGraph),
+            {mutualInfo: MutualInfo => List(Styles.graphLink)}
+          })(forceGraph.mutualInfoToGraph, forceGraph.mutualInfoLinks),
         {() => data.close(); remove()})
     }
     channel.bind(gaussiansData) {(data: ChartData[LabeledGaussians], remove: () => Unit) =>
