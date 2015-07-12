@@ -19,7 +19,7 @@ package object view {
 
   val chartBuilderForm = ChartBuilderForm
 
-  val md3 = D3
+  val forceGraph = ForceGraph
 
   val typeahead = Typeahead
 }

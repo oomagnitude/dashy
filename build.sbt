@@ -42,8 +42,8 @@ lazy val dash = crossProject.in(file(".")).
     libraryDependencies ++= Seq(
       "be.doeraene" %%% "scalajs-jquery" % "0.8.0",
       "org.scala-js" %%% "scalajs-dom" % "0.8.0",
-      "com.lihaoyi" %%% "scalarx" % "0.2.8"//,
-//      "org.spaced.scalajs" %%% "scalajs-d3" % "0.1-SNAPSHOT"
+      "com.lihaoyi" %%% "scalarx" % "0.2.8",
+      "org.spaced.scalajs" %%% "scalajs-d3" % "0.1-SNAPSHOT"
     ),
     jsDependencies ++= Seq(
       // Makes it possible to run the application from the sbt console (i.e., switches runtime to PhantomJS)

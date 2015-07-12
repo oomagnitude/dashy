@@ -15,4 +15,6 @@ trait JQueryExt extends JQuery {
   def typeahead(key: String): this.type = js.native
 
   def typeahead(key: String, value: String): this.type  = js.native
+
+  def tooltip(options: js.Dynamic): this.type = js.native
 }

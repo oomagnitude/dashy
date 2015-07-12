@@ -33,8 +33,7 @@ object Rxs {
   }
 
   implicit class RxListOps[T](items: Rx[List[T]])(implicit tToFrag: T => Frag) {
-
-    def asFrags: Frag = {
+    def asFrags(postAppend: dom.Node => Unit): Frag = {
       def children = {
         // insert dummy div tag so that the parent is always accessible
         if (items().isEmpty) List(div().render)
@@ -46,11 +45,13 @@ object Rxs {
         val parent = last.head.parentNode
         val newLast = children
         last.foreach(parent.removeChild)
-        newLast.foreach(parent.appendChild)
+        newLast.foreach{newElem => parent.appendChild(newElem); postAppend(newElem)}
         last = newLast
       }
       last
     }
+
+    def asFrags: Frag = asFrags({n: dom.Node =>})
   }
 
   private class Counter {

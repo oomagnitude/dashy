@@ -1,9 +1,7 @@
 package svg
 
-import com.oomagnitude.css.Styles
-
-import scalatags.JsDom.{TypedTag, svgAttrs => sa, svgTags => st}
 import scalatags.JsDom.all._
+import scalatags.JsDom.{svgAttrs => sa, svgTags => st}
 
 object Svg {
 
@@ -13,8 +11,12 @@ object Svg {
    * @return
    */
   def apply(aspectRatio: Double) = {
-    val width = 500
-    val height = (width / aspectRatio).toInt
+    val (width, height) = dimensions(aspectRatio)
     st.svg(sa.viewBox:=s"0 0 $width $height", sa.preserveAspectRatio:="xMinYMin meet")
+  }
+
+  def dimensions(aspectRatio: Double) = {
+    val width = 500.0
+    (width, width / aspectRatio)
   }
 }

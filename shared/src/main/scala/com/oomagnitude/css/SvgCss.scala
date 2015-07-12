@@ -15,4 +15,8 @@ object SvgCss {
   object strokeWidth extends TypedAttrT1[Number] {
     override val attr = Attr.real("stroke-width")
   }
+
+  object strokeOpacity extends TypedAttrT1[Number] {
+    override val attr = Attr.real("stroke-opacity")
+  }
 }

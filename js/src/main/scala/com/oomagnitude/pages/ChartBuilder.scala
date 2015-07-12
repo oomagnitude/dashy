@@ -1,15 +1,21 @@
 package com.oomagnitude.pages
 
 import com.oomagnitude.bind.ViewChannel
+import com.oomagnitude.css.Styles
 import com.oomagnitude.metrics.model.Metrics._
 import com.oomagnitude.model.{ChartData, ChartModel, ListWithId}
 import com.oomagnitude.rx.Rxs
+import com.oomagnitude.view.ForceGraph.{CellInfoWithId, MutualInfoWithId}
 import com.oomagnitude.view._
+import d3.D3Scale
 import org.scalajs.dom.html
 import org.scalajs.dom.raw.MouseEvent
 
 import scala.scalajs.js.annotation.JSExport
+import scalacss.ScalatagsCss._
 import scalatags.JsDom.all._
+import scalatags.JsDom.{svgAttrs => sa, svgTags => st}
+
 
 @JSExport
 object ChartBuilder {
@@ -26,7 +32,21 @@ object ChartBuilder {
       removablePanel(data.params.title, timeSeriesChart(data), {() => data.close(); remove()})
     }
     channel.bind(forceGraphData) {(data: ChartData[MutualInfos], remove: () => Unit) =>
-      removablePanel(data.params.title, md3.forceGraph(data, aspectRatio = 2)(md3.forceGraph.mutualInfoToGraph),
+      removablePanel(data.params.title, forceGraph[MutualInfos, CellInfoWithId, MutualInfoWithId](data,
+          aspectRatio = 2,
+          linkDistance = { (width: Double, height: Double) =>
+
+            {m: MutualInfoWithId => (1.0 - m.ejc) * (height / 2)}
+          },
+          nodeStyle = { cells: Iterable[CellInfoWithId] =>
+            val colorScale = D3Scale.colorScale(cells.map(_.numConnections.toDouble), D3Scale.GreenGradient)
+
+            {cell: CellInfoWithId => List(Styles.graphNode, sa.fill := colorScale(cell.numConnections))}
+          },
+          linkStyle = { mutualInfos: Iterable[MutualInfoWithId] =>
+
+            {mutualInfo: MutualInfoWithId => List(Styles.graphLink)}
+          })(forceGraph.mutualInfoToGraph),
         {() => data.close(); remove()})
     }
     channel.bind(gaussiansData) {(data: ChartData[LabeledGaussians], remove: () => Unit) =>
