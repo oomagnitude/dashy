@@ -5,18 +5,19 @@ import com.oomagnitude.css.{Styles => css}
 import com.oomagnitude.metrics.model.Metrics.{CellInfo, MutualInfo, MutualInfos}
 import com.oomagnitude.model.ChartData
 import com.oomagnitude.rx.Rxs._
-import d3.{D3Layout => layout, _}
+import d3.all._
 import jquery.JQueryExt._
 import org.scalajs.dom
 import org.scalajs.jquery._
 import rx._
 import svg.Svg
+import viz.layout.JsLink
 
+import scala.scalajs.js.Dynamic.literal
 import scalacss.ScalatagsCss._
 import scalatags.JsDom
 import scalatags.JsDom.all._
 import scalatags.JsDom.{svgAttrs => sa, svgTags => st}
-import scalajs.js.Dynamic.literal
 
 object ForceGraph {
 

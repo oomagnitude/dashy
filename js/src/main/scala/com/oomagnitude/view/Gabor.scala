@@ -4,10 +4,11 @@ import com.oomagnitude.css.{Styles => style}
 import com.oomagnitude.metrics.model.Metrics._
 import com.oomagnitude.model.ChartData
 import com.oomagnitude.rx.Rxs._
-import d3.{D3Scale, LinearScale}
+import d3.scale.D3Scale
 import org.scalajs.dom.html.Div
 import rx._
 import svg.Svg
+import viz.scale.LinearScale
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._

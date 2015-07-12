@@ -6,7 +6,7 @@ import com.oomagnitude.metrics.model.Metrics._
 import com.oomagnitude.model.{ChartData, ChartModel, ListWithId}
 import com.oomagnitude.rx.Rxs
 import com.oomagnitude.view._
-import d3.D3Scale
+import d3.scale.D3Scale
 import org.scalajs.dom.html
 import org.scalajs.dom.raw.MouseEvent
 
@@ -40,7 +40,8 @@ object ChartBuilder {
           nodeStyle = { cells: Iterable[CellInfo] =>
             val colorScale = D3Scale.colorScale(cells.map(_.numConnections.toDouble), D3Scale.GreenGradient)
 
-            {cell: CellInfo => List(Styles.graphNode, sa.fill := colorScale(cell.numConnections), title:=cell.id)}
+            {cell: CellInfo => List(Styles.graphNode, sa.fill := colorScale(cell.numConnections),
+              title:=s"${cell.id},${cell.numConnections} connections")}
           },
           linkStyle = { mutualInfo: Iterable[MutualInfo] =>
 

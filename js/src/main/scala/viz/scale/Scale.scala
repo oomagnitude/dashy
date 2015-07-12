@@ -1,4 +1,4 @@
-package d3
+package viz.scale
 
 // TODO: put this stuff into a separate library
 
@@ -6,13 +6,13 @@ trait Invertible[D, R] {
   def invert(y: R): D
 }
 
-trait Clampable[S] {
-  def clamp(c: Boolean): S
+trait Clampable {
+  def clamp(c: Boolean): this.type
   def clamp: Boolean
 }
 
-trait Roundable[R, S] {
-  def rangeRound(values: Seq[R]): S
+trait Roundable[R] {
+  def rangeRound(values: Seq[R]): this.type
 }
 
 trait Ticks[D] {
@@ -29,34 +29,34 @@ trait InvertibleExtent[D, R] {
   def invertExtent(y: R): (D, D)
 }
 
-trait Interpolatable[D, R, S] {
+trait Interpolatable[D, R] {
   def interpolate: (D, R) => (Double => R)
-  def interpolate(factory: (D, R) => (Double => R)): S
+  def interpolate(factory: (D, R) => (Double => R)): this.type
 }
 
 
-trait LinearScale[D, R] extends Scale[D, R, LinearScale[D, R]]
-    with Invertible[D, R] with Clampable[LinearScale[D, R]]
-    with Roundable[R, LinearScale[D, R]] with Ticks[D]
-    with ConfigurableTicks[D] with Interpolatable[D, R, LinearScale[D, R]] {
+trait LinearScale[D, R] extends Scale[D, R]
+    with Invertible[D, R] with Clampable
+    with Roundable[R] with Ticks[D]
+    with ConfigurableTicks[D] with Interpolatable[D, R] {
   def nice(count: Int): LinearScale[D, R]
 }
 
-trait IdentityScale[D] extends Scale[D, D, IdentityScale[D]]
+trait IdentityScale[D] extends Scale[D, D]
     with Invertible[D, D] with Ticks[D] with ConfigurableTicks[D]
 
-trait LogScale[D, R] extends Scale[D, R, LogScale[D, R]] with Invertible[D, R]
-    with Clampable[LogScale[D, R]] with Roundable[R, LogScale[D, R]]
-    with Ticks[D] with Interpolatable[D, R, LogScale[D, R]] {
+trait LogScale[D, R] extends Scale[D, R] with Invertible[D, R]
+    with Clampable with Roundable[R]
+    with Ticks[D] with Interpolatable[D, R] {
   def nice(): LogScale[D, R]
 
   def base(b: Double): LogScale[D, R]
   def base: Double
 }
 
-trait PowerScale[D, R] extends Scale[D, R, PowerScale[D, R]] with Invertible[D, R]
-    with Clampable[PowerScale[D, R]] with Roundable[R, PowerScale[D, R]]
-    with Ticks[D] with ConfigurableTicks[D] with Interpolatable[D, R, PowerScale[D, R]] {
+trait PowerScale[D, R] extends Scale[D, R] with Invertible[D, R]
+    with Clampable with Roundable[R]
+    with Ticks[D] with ConfigurableTicks[D] with Interpolatable[D, R] {
   def nice(tickCount: Int): PowerScale[D, R]
   def nice(): PowerScale[D, R]
   def exponent(k: Double): PowerScale[D, R]
@@ -64,9 +64,9 @@ trait PowerScale[D, R] extends Scale[D, R, PowerScale[D, R]] with Invertible[D, 
 }
 
 // D type must be coercible to a js.Date
-trait TimeScale[D, R] extends Scale[D, R, TimeScale[D, R]] with Invertible[D, R]
-    with Roundable[R, TimeScale[D, R]] with Interpolatable[D, R, TimeScale[D, R]]
-    with Clampable[TimeScale[D, R]] with ConfigurableTicks[D] {
+trait TimeScale[D, R] extends Scale[D, R] with Invertible[D, R]
+    with Roundable[R] with Interpolatable[D, R]
+    with Clampable with ConfigurableTicks[D] {
   // TODO:
   // nice([interval[, step]])
   // nice([count])
@@ -74,9 +74,9 @@ trait TimeScale[D, R] extends Scale[D, R, TimeScale[D, R]] with Invertible[D, R]
   def tickFormat(count: Int): Double => String
 }
 
-trait ThresholdScale[D, R] extends Scale[D, R, ThresholdScale[D, R]] with InvertibleExtent[D, R]
+trait ThresholdScale[D, R] extends Scale[D, R] with InvertibleExtent[D, R]
 
-trait OrdinalScale[D, R] extends Scale[D, R, OrdinalScale[D, R]] {
+trait OrdinalScale[D, R] extends Scale[D, R] {
   def rangePoints(min: R, max: R, padding: Int = 0): OrdinalScale[D, R]
   def rangeRoundPoints(min: R, max: R, padding: Int = 0): OrdinalScale[D, R]
   def rangeBands(min: R, max: R): OrdinalScale[D, R]
@@ -87,9 +87,9 @@ trait OrdinalScale[D, R] extends Scale[D, R, OrdinalScale[D, R]] {
   def rangeExtent: Extent[R]
 }
 
-trait QuantizeScale[D, R] extends Scale[D, R, QuantizeScale[D, R]] with InvertibleExtent[D, R]
+trait QuantizeScale[D, R] extends Scale[D, R] with InvertibleExtent[D, R]
 
-trait QuantileScale[D, R] extends Scale[D, R, QuantileScale[D, R]] with InvertibleExtent[D, R] {
+trait QuantileScale[D, R] extends Scale[D, R] with InvertibleExtent[D, R] {
   def quantiles(): Seq[R]
 }
 
@@ -98,14 +98,13 @@ trait QuantileScale[D, R] extends Scale[D, R, QuantileScale[D, R]] with Invertib
  *
  * @tparam D the type of value in the domain of the scale
  * @tparam R the type of value in the range of the scale
- * @tparam S the type of scale object (used to configure the scale bit-by-bit)
  */
-trait Scale[D, R, S <: Scale[D, R, S]] {
+trait Scale[D, R] {
   def apply(x: D): R
   def domain: Seq[D]
-  def domain(points: Seq[D]): S
+  def domain(points: Seq[D]): this.type
   def range: Seq[R]
-  def range(points: Seq[R]): S
+  def range(points: Seq[R]): this.type
 }
 
 trait Scales {
