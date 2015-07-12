@@ -46,7 +46,7 @@ object ForceGraph {
     val (width, height) = Svg.dimensions(aspectRatio)
     val distance = linkDistance(width, height)
 
-    val force = layout.force
+    val force = d3.layout.force
       .charge(-120)
       .size(width, height)
 
