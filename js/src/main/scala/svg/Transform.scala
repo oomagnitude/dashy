@@ -1,4 +1,4 @@
-package com.oomagnitude.svg
+package svg
 
 import scala.language.implicitConversions
 
@@ -15,6 +15,8 @@ object Transform {
    * `y` is not provided, it is assumed to be zero.
    */
   object translate {
+    def apply(x: Double, y: Double) = s"translate($x,$y)"
+
     def apply(x: Int, y: Int) = s"translate($x,$y)"
 
     def apply(x: Int) = s"translate($x)"

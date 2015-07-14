@@ -32,7 +32,7 @@ class D3ForceLayout extends ForceLayout {
      layout.on("tick", { (event: js.Dynamic) =>
        _points.zipWithIndex.foreach {
          case (point, index) =>
-           val node = jsNodes(index).asInstanceOf[JsNode]
+           val node = jsNodes(index).asInstanceOf[ForceNode]
            point.update(node.x, node.y)
        }
      })
@@ -52,10 +52,10 @@ class D3ForceLayout extends ForceLayout {
      this
    }
 
-   override def linkDistance(distance: (JsLink, Int) => Double): ForceLayout = {
+   override def linkDistance(distance: (ForceLink, Int) => Double): ForceLayout = {
      layout.linkDistance({
        (l: js.Dynamic, index: Int) =>
-         val link = jsLinks(index).asInstanceOf[JsLink]
+         val link = jsLinks(index).asInstanceOf[ForceLink]
          distance(link, index)
      })
      this
@@ -120,7 +120,7 @@ class D3ForceLayout extends ForceLayout {
   override def linkStrength(strength: LinkFunction): ForceLayout = {
     layout.linkStrength({
       (l: js.Dynamic, index: Int) =>
-        val link = jsLinks(index).asInstanceOf[JsLink]
+        val link = jsLinks(index).asInstanceOf[ForceLink]
         strength(link, index)
     })
     this
@@ -151,7 +151,7 @@ class D3ForceLayout extends ForceLayout {
   override def charge(charge: NodeFunction): ForceLayout = {
     layout.charge({
       (n: js.Dynamic, index: Int) =>
-        val node = jsNodes(index).asInstanceOf[JsNode]
+        val node = jsNodes(index).asInstanceOf[ForceNode]
         charge(node, index)
     })
     this

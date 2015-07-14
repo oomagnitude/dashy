@@ -16,7 +16,7 @@ import scalatags.JsDom.all._
 import scalatags.JsDom.{TypedTag, svgAttrs => sa, svgTags => st}
 
 object Gabor {
-  
+
   implicit val gaussianOrdering = new Ordering[LocatableGaussian] {
     override def compare(x: LocatableGaussian, y: LocatableGaussian): Int = x.gaussian.mean.compare(y.gaussian.mean)
   }

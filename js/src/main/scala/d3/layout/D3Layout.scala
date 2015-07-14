@@ -11,12 +11,6 @@ object D3Layout extends Layout {
   override def bundle: BundleLayout = ???
 
   /**
-   * derive a custom hierarchical layout implementation
-   * [[https://github.com/mbostock/d3/wiki/Hierarchy-Layout]]
-   */
-  override def hierarchy: HierarchyLayout = ???
-
-  /**
    * produce a hierarchical layout using recursive circle-packing
    * [[https://github.com/mbostock/d3/wiki/Pack-Layout]]
    */
@@ -45,7 +39,7 @@ object D3Layout extends Layout {
    * position a tree of nodes tidily.
    * [[https://github.com/mbostock/d3/wiki/Tree-Layout]]
    */
-  override def tree: TreeLayout = ???
+  override def tree: TreeLayout = new D3TreeLayout
 
   /**
    * compute the start and end angles for arcs in a pie or donut chart

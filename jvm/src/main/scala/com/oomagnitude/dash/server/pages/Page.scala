@@ -9,7 +9,7 @@ import scalatags.Text.all._
 
 object Page {
   val ChartBuilderBoot = "com.oomagnitude.pages.ChartBuilder().main(document.getElementById('contents'))"
-  val GaborBoot = "com.oomagnitude.pages.Gabor().main(document.getElementById('contents'))"
+  val TreeBoot = "com.oomagnitude.TreeTest().main(document.getElementById('contents'))"
 
   def skeleton(boot: String) =
     html(

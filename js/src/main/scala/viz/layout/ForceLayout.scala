@@ -9,7 +9,7 @@ import scala.scalajs.js
  * [[https://github.com/mbostock/d3/wiki/Force-Layout#nodes]]
  */
 
-trait JsNode extends js.Object {
+trait ForceNode extends js.Object {
   def index: Int = js.native
   def id: String = js.native
   def x: Double = js.native
@@ -20,9 +20,9 @@ trait JsNode extends js.Object {
   def weight: Int = js.native
 }
 
-trait JsLink extends js.Object {
-  def source: JsNode = js.native
-  def target: JsNode = js.native
+trait ForceLink extends js.Object {
+  def source: ForceNode = js.native
+  def target: ForceNode = js.native
 }
 
 /**
@@ -32,8 +32,8 @@ trait JsLink extends js.Object {
  * Therefore, indexes for [[IndexedSeq]] can be used to map nodes, links, points and lines to external data structures.
  */
 trait ForceLayout {
-  type LinkFunction = (JsLink, Int) => Double
-  type NodeFunction = (JsNode, Int) => Double
+  type LinkFunction = (ForceLink, Int) => Double
+  type NodeFunction = (ForceNode, Int) => Double
 
   /**
    * Initialize the force layout with a set of nodes and links. After calling this method, each node is bound to a

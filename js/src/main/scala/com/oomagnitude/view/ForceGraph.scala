@@ -11,7 +11,7 @@ import org.scalajs.dom
 import org.scalajs.jquery._
 import rx._
 import svg.Svg
-import viz.layout.JsLink
+import viz.layout.ForceLink
 
 import scala.scalajs.js.Dynamic.literal
 import scalacss.ScalatagsCss._
@@ -36,6 +36,7 @@ object ForceGraph {
     }
   }
 
+  // TODO: cleanup all these crazy function arguments
   def apply[T, N, L](data: ChartData[T], aspectRatio: Double,
                      linkDistance: (Double, Double) => L => Double = {(w: Double, h: Double) => {_: L => 20.0}},
                      nodeStyle: Iterable[N] => N => Seq[JsDom.Modifier] = {ns: Iterable[N] => n: N => List.empty},
@@ -60,7 +61,7 @@ object ForceGraph {
       val linkToStyle = linkStyle(links)
 
       force
-        .linkDistance({(_: JsLink, index: Int) => distance(links(index))})
+        .linkDistance({(_: ForceLink, index: Int) => distance(links(index))})
         .init(nodes.size, toLinks(nodes, links))
         .start()
 

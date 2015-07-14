@@ -32,12 +32,6 @@ trait Layout {
   def force: ForceLayout
 
   /**
-   * derive a custom hierarchical layout implementation
-   * [[https://github.com/mbostock/d3/wiki/Hierarchy-Layout]]
-   */
-  def hierarchy: HierarchyLayout
-
-  /**
    * compute the distribution of data using quantized bins.
    * [[https://github.com/mbostock/d3/wiki/Histogram-Layout]]
    */
@@ -85,11 +79,10 @@ trait ChordLayout
 trait ClusterLayout
 
 
-trait HierarchyLayout
 trait HistogramLayout
 trait PackLayout
 trait PartitionLayout
 trait PieLayout
 trait StackLayout
-trait TreeLayout
+
 trait TreemapLayout

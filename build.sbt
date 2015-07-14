@@ -33,7 +33,10 @@ lazy val dash = crossProject.in(file(".")).
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-http-experimental" % "1.0-RC4",
       "com.typesafe.akka" %% "akka-stream-experimental" % "1.0-RC4"
-    )
+    ),
+    (resourceGenerators in Compile) <+=
+      (fastOptJS in Compile in "dashJS").map((f1) => Seq(f1.data)),
+    watchSources <++= (watchSources in "dashJS")
   )
   .jsSettings(
     skip in packageJSDependencies := false,
@@ -45,14 +48,10 @@ lazy val dash = crossProject.in(file(".")).
     jsDependencies ++= Seq(
       // Makes it possible to run the application from the sbt console (i.e., switches runtime to PhantomJS)
       RuntimeDOM)
-  )
+  ).settings(Revolver.settings: _*)
 
 scalaJSStage in Global := FastOptStage
 
 lazy val dashJS = dash.js
-lazy val dashJVM = dash.jvm.settings(
-  (resourceGenerators in Compile) <+=
-    (fastOptJS in Compile in dashJS).map((f1) => Seq(f1.data)),
-  watchSources <++= (watchSources in dashJS)
-).settings(Revolver.settings: _*)
+lazy val dashJVM = dash.jvm
 
