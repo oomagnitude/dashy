@@ -1,17 +1,17 @@
 package viz.shape
 
-import viz.layout.{ExpandedTree, HierarchyLink}
+import viz.layout.{ExpandedNode, TreeLink}
 
 trait Diagonal {
   /**
    * [[https://github.com/mbostock/d3/wiki/SVG-Shapes#_diagonal]]
    */
-  def apply(datum: HierarchyLink[ExpandedTree]): String
+  def apply(datum: TreeLink[ExpandedNode]): String
 
   /**
    * [[https://github.com/mbostock/d3/wiki/SVG-Shapes#_diagonal]]
    */
-  def apply(datum: HierarchyLink[ExpandedTree], index: Int): String
+  def apply(datum: TreeLink[ExpandedNode], index: Int): String
 
   /**
    * [[https://github.com/mbostock/d3/wiki/SVG-Shapes#_diagonal]]

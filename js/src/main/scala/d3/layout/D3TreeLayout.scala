@@ -10,25 +10,25 @@ import scala.scalajs.js.UndefOr
 class D3TreeLayout extends TreeLayout {
   private[this] val layout: js.Dynamic = d3.layout.tree()
 
-  override def separation(fn: (ExpandedTree, ExpandedTree) => Double): this.type = {
-    layout.separation({(a: js.Dynamic, b: js.Dynamic) => fn(a.asInstanceOf[ExpandedTree], b.asInstanceOf[ExpandedTree])})
+  override def separation(fn: (ExpandedNode, ExpandedNode) => Double): this.type = {
+    layout.separation({(a: js.Dynamic, b: js.Dynamic) => fn(a.asInstanceOf[ExpandedNode], b.asInstanceOf[ExpandedNode])})
     this
   }
 
-  override def links(root: Tree): Seq[HierarchyLink[ExpandedTree]] = {
+  override def links(root: Tree): Seq[TreeLink[ExpandedNode]] = {
     val nodes = computeNodes(root)
     layout.links(nodes)
       .asInstanceOf[js.Array[js.Dynamic]]
-      .map(link => HierarchyLink(toExpandedNode(link.source), toExpandedNode(link.target)))
+      .map(link => TreeLink(toExpandedNode(link.source), toExpandedNode(link.target)))
   }
 
-  override def apply(root: Tree): Seq[ExpandedTree] = computeNodes(root).map(toExpandedNode)
+  override def apply(root: Tree): Seq[ExpandedNode] = computeNodes(root).map(toExpandedNode)
 
-  private def toExpandedNode(node: js.Dynamic): ExpandedTree = {
+  private def toExpandedNode(node: js.Dynamic): ExpandedNode = {
     val children = node.children.asInstanceOf[UndefOr[js.Array[js.Dynamic]]]
     val parent = node.parent.asInstanceOf[UndefOr[js.Dynamic]]
     val numChildren = children.map(_.size).getOrElse(0)
-    ExpandedTree(node.id.asInstanceOf[String], node.depth.asInstanceOf[Int], node.x.asInstanceOf[Double],
+    ExpandedNode(node.id.asInstanceOf[String], node.depth.asInstanceOf[Int], node.x.asInstanceOf[Double],
       node.y.asInstanceOf[Double], numChildren, parent.isEmpty)
   }
 

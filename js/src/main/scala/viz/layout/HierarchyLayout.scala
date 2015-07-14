@@ -1,50 +1,17 @@
 package viz.layout
 
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.{JSExportAll, JSExport}
+import scala.scalajs.js.annotation.JSExportAll
 
+@JSExportAll
 trait Tree {
-  @JSExport("children")
-  // needed for traversal
   def children: UndefOr[Seq[Tree]]
 
-  @JSExport("id")
   def id: String
 }
 
-//trait ExpandedTree {
-//  @JSExport("id")
-//  def id: String
-//
-//  @JSExport("parent")
-//  def parent: UndefOr[ExpandedTree]
-//
-//  @JSExport("depth")
-//  def depth: Int
-//
-//  @JSExport("x")
-//  def x: Double
-//
-//  @JSExport("y")
-//  def y: Double
-//
-//  @JSExport
-//  def numChildren: Int
-//
-//  def isLeaf: Boolean = numChildren < 1
-//
-//  override def toString: String = {
-//    s"ExpandedTree(id = $id, depth = $depth, x = $x, y = $y, hasParent = ${if (parent.isDefined) true else false}})"
-//  }
-//}
-
 @JSExportAll
-case class ExpandedTree(id: String, depth: Int, x: Double, y: Double, numChildren: Int, isRoot: Boolean) {
-  def isLeaf: Boolean = numChildren <= 0
-}
-
-@JSExportAll
-case class HierarchyLink[N](source: N, target: N)
+case class TreeLink[N](source: N, target: N)
 
 /**
   * derive a custom hierarchical layout implementation
@@ -62,7 +29,7 @@ trait HierarchyLayout[N] {
   /**
    * [[https://github.com/mbostock/d3/wiki/Hierarchy-Layout#links]]
    */
-  def links(root: Tree): Seq[HierarchyLink[N]]
+  def links(root: Tree): Seq[TreeLink[N]]
 
 //  /**
 //   * [[https://github.com/mbostock/d3/wiki/Hierarchy-Layout#children]]
