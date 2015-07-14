@@ -10,6 +10,7 @@ import scala.scalajs.js.annotation.JSExport
 import scalacss.ScalatagsCss._
 import scalatags.JsDom.all._
 import scalatags.JsDom.{svgAttrs => sa, svgTags => st}
+import viz.layout.TreeLayout._
 
 @JSExport
 object RadialReingoldTilfordTree {
@@ -23,7 +24,7 @@ object RadialReingoldTilfordTree {
 
     val tree = d3.layout.tree
       .size(360, radius - 120)
-      .separation({(aParentId, aDepth, bParentId, bDepth) => (if(aParentId == bParentId) 1.0 else 2.0) / aDepth.toDouble})
+      .separation({(a: ParentIdAndDepth, b: ParentIdAndDepth) => (if(a._1 == b._1) 1.0 else 2.0) / a._2.toDouble})
 
     val diagonal = d3.shape.diagonalRadial
       .projection({(x: Double, y: Double)=> (y, x / 180 * Math.PI) })

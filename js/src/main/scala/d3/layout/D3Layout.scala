@@ -64,7 +64,7 @@ object D3Layout extends Layout {
    * recursively partition a node tree into a sunburst or icicle.
    * [[https://github.com/mbostock/d3/wiki/Partition-Layout]]
    */
-  override def partition: PartitionLayout = ???
+  override def partition: PartitionLayout = new D3PartitionLayout
 
   /**
    * compute the distribution of data using quantized bins.

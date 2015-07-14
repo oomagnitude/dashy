@@ -11,6 +11,7 @@ object Page {
   val ChartBuilderBoot = "com.oomagnitude.pages.ChartBuilder().main(document.getElementById('contents'))"
   val TreeBoot = "d3.examples.ReingoldTilfordTree().main(document.getElementById('contents'))"
   val RadialTreeBoot = "d3.examples.RadialReingoldTilfordTree().main(document.getElementById('contents'))"
+  val ZoomablePartitionSunburstBoot = "d3.examples.ZoomablePartitionSunburst().main(document.getElementById('contents'))"
 
   def skeleton(boot: String) =
     html(

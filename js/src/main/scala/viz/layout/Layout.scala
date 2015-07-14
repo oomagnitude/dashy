@@ -81,7 +81,7 @@ trait ClusterLayout
 
 trait HistogramLayout
 trait PackLayout
-trait PartitionLayout
+
 trait PieLayout
 trait StackLayout
 

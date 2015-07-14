@@ -22,6 +22,11 @@ object D3Scale extends Scales {
   override def threshold[D, R]: ThresholdScale[D, R] = new D3ThresholdScale[D, R]()
   override def quantize[D, R]: QuantizeScale[D, R] = new D3QuantizeScale[D, R]()
   override def quantile[D, R]: QuantileScale[D, R] = new D3QuantileScale[D, R]()
+  override def power: PowerScale[Double, Double] = new D3PowerScale[Double, Double]()
+  override def category10[D]: OrdinalScale[D, String] = new D3OrdinalScale[D, String](d3.scale.category10())
+  override def category20[D]: OrdinalScale[D, String] = new D3OrdinalScale[D, String](d3.scale.category20())
+  override def category20b[D]: OrdinalScale[D, String] = new D3OrdinalScale[D, String](d3.scale.category20b())
+  override def category20c[D]: OrdinalScale[D, String] = new D3OrdinalScale[D, String](d3.scale.category20c())
 
   override def colorScale(data: Iterable[Double], colors: Seq[String]): LinearScale[Double, String] = {
     require(colors.size > 1, s"color scale must provide at least 2 colors for $colors")

@@ -62,7 +62,14 @@ class Server(api: ExperimentApi)(implicit fm: Materializer, system: ActorSystem,
             )
           }
         } ~
-        // Scala-JS puts them in the root of the resource directory per default,
+        path("sunburst") {
+          complete {
+            HttpEntity(
+              MediaTypes.`text/html`,
+              "<!DOCTYPE html>\n" + Page.skeleton(Page.ZoomablePartitionSunburstBoot).render
+            )
+          }
+        } ~        // Scala-JS puts them in the root of the resource directory per default,
         // so that's where we pick them up
         pathPrefix("js") {
           path(Segment) { filename =>

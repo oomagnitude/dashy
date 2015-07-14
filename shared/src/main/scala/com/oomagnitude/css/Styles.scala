@@ -19,4 +19,25 @@ object Styles extends StyleSheet.Inline {
   val treeNode = style(fontSize(4 px), fontFamily:="sans-serif")
   // TODO: why does color.steelblue not work in stroke?
   val treeNodeCircle = style(fill(c"#fff"), stroke:=!"steelblue", strokeWidth(1))
+
+  /*
+  TODO:
+  body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  margin: auto;
+  position: relative;
+  width: 960px;
+}
+
+form {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+}
+
+path {
+  stroke: #fff;
+  fill-rule: evenodd;
+}
+   */
 }

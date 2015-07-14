@@ -103,8 +103,10 @@ trait Scale[D, R] {
   def apply(x: D): R
   def domain: Seq[D]
   def domain(points: Seq[D]): this.type
+  def domain(min: D, max: D): this.type = domain(Seq(min, max))
   def range: Seq[R]
   def range(points: Seq[R]): this.type
+  def range(min: R, max: R): this.type = range(Seq(min, max))
 }
 
 trait Scales {
@@ -118,4 +120,11 @@ trait Scales {
   def quantize[D, R]: QuantizeScale[D, R]
   def quantile[D, R]: QuantileScale[D, R]
   def colorScale(data: Iterable[Double], colors: Seq[String]): LinearScale[Double, String]
+  def power: PowerScale[Double, Double]
+  def squareRoot: PowerScale[Double, Double] = power.exponent(0.5)
+  def category10[D]: OrdinalScale[D, String]
+  def category20[D]: OrdinalScale[D, String]
+  def category20b[D]: OrdinalScale[D, String]
+  def category20c[D]: OrdinalScale[D, String]
+
 }
