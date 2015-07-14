@@ -5,8 +5,7 @@ import viz.shape.Diagonal
 import scala.scalajs.js
 
 
-class D3Diagonal extends Diagonal {
-  private[this] val shape = d3.svg.diagonal()
+class D3Diagonal(shape: js.Dynamic = d3.svg.diagonal()) extends Diagonal {
 
   override def apply(datum: TreeLink[ExpandedNode]): String =
     shape(datum.asInstanceOf[js.Any]).asInstanceOf[String]

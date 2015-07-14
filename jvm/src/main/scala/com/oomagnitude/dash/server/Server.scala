@@ -54,6 +54,14 @@ class Server(api: ExperimentApi)(implicit fm: Materializer, system: ActorSystem,
             )
           }
         } ~
+        path("radialTree") {
+          complete {
+            HttpEntity(
+              MediaTypes.`text/html`,
+              "<!DOCTYPE html>\n" + Page.skeleton(Page.RadialTreeBoot).render
+            )
+          }
+        } ~
         // Scala-JS puts them in the root of the resource directory per default,
         // so that's where we pick them up
         pathPrefix("js") {

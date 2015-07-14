@@ -20,6 +20,7 @@ object Transform {
     def apply(x: Int, y: Int) = s"translate($x,$y)"
 
     def apply(x: Int) = s"translate($x)"
+    def apply(x: Double) = s"translate($x)"
   }
 
   /**
@@ -36,8 +37,10 @@ object Transform {
    *  equivalent of the following transform definitions list: `translate(x, y)` `rotate(a)` `translate(-x, -y)`.
    */
   object rotate {
+    def apply(a: Double, x: Double, y: Double) = s"rotate($a,$x,$y)"
     def apply(a: Int, x: Int, y: Int) = s"rotate($a,$x,$y)"
     def apply(a: Int) = s"rotate($a)"
+    def apply(a: Double) = s"rotate($a)"
   }
 
   /**

@@ -10,8 +10,10 @@ import scala.scalajs.js.UndefOr
 class D3TreeLayout extends TreeLayout {
   private[this] val layout: js.Dynamic = d3.layout.tree()
 
-  override def separation(fn: (ExpandedNode, ExpandedNode) => Double): this.type = {
-    layout.separation({(a: js.Dynamic, b: js.Dynamic) => fn(a.asInstanceOf[ExpandedNode], b.asInstanceOf[ExpandedNode])})
+  override def separation(fn: (Option[String], Int, Option[String], Int) => Double): this.type = {
+    layout.separation({(a: js.Dynamic, b: js.Dynamic) =>
+      fn(parentId(a), a.depth.asInstanceOf[Int], parentId(b), b.depth.asInstanceOf[Int])
+    })
     this
   }
 
@@ -26,11 +28,14 @@ class D3TreeLayout extends TreeLayout {
 
   private def toExpandedNode(node: js.Dynamic): ExpandedNode = {
     val children = node.children.asInstanceOf[UndefOr[js.Array[js.Dynamic]]]
-    val parent = node.parent.asInstanceOf[UndefOr[js.Dynamic]]
+    val parent = parentId(node)
     val numChildren = children.map(_.size).getOrElse(0)
     ExpandedNode(node.id.asInstanceOf[String], node.depth.asInstanceOf[Int], node.x.asInstanceOf[Double],
-      node.y.asInstanceOf[Double], numChildren, parent.isEmpty)
+      node.y.asInstanceOf[Double], numChildren, parent)
   }
+
+  private def parentId(node: js.Dynamic): Option[String] =
+    node.parent.asInstanceOf[UndefOr[js.Dynamic]].map(_.id.asInstanceOf[String]).toOption
 
   private def computeNodes(root: Tree): js.Array[js.Dynamic] =
     layout(convertToLiteral(root)).asInstanceOf[js.Array[js.Dynamic]]

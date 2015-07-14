@@ -18,9 +18,6 @@ case class TreeLink[N](source: N, target: N)
   * [[https://github.com/mbostock/d3/wiki/Hierarchy-Layout]]
   */
 trait HierarchyLayout[N] {
-  // nodes: need to get x and y, plus depth
-  // links: need to get source and target (using parent -> this)
-
   /**
    * [[https://github.com/mbostock/d3/wiki/Hierarchy-Layout#_hierarchy]]
    */
@@ -30,11 +27,6 @@ trait HierarchyLayout[N] {
    * [[https://github.com/mbostock/d3/wiki/Hierarchy-Layout#links]]
    */
   def links(root: Tree): Seq[TreeLink[N]]
-
-//  /**
-//   * [[https://github.com/mbostock/d3/wiki/Hierarchy-Layout#children]]
-//   */
-//  def children(accessor: N => Seq[N]): this.type
 }
 
 //// TODO: come up with comparator for sorting. off by default.

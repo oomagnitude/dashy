@@ -10,6 +10,7 @@ import scalatags.Text.all._
 object Page {
   val ChartBuilderBoot = "com.oomagnitude.pages.ChartBuilder().main(document.getElementById('contents'))"
   val TreeBoot = "d3.examples.ReingoldTilfordTree().main(document.getElementById('contents'))"
+  val RadialTreeBoot = "d3.examples.RadialReingoldTilfordTree().main(document.getElementById('contents'))"
 
   def skeleton(boot: String) =
     html(
