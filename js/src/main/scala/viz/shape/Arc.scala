@@ -24,7 +24,7 @@ trait ArcDatum[T] {
   /**
    * [[https://github.com/mbostock/d3/wiki/SVG-Shapes#arc_cornerRadius]]
    */
-  def cornerRadius(item: T): Double = outerRadius(item)
+  def cornerRadius(item: T): Double = 0
 
   /**
    * [[https://github.com/mbostock/d3/wiki/SVG-Shapes#arc_padRadius]]

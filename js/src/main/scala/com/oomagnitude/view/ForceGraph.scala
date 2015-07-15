@@ -4,7 +4,6 @@ import com.oomagnitude.api.DataPoints
 import com.oomagnitude.css.{Styles => css}
 import com.oomagnitude.metrics.model.Metrics.{CellInfo, MutualInfo, MutualInfos}
 import com.oomagnitude.model.ChartData
-import com.oomagnitude.rx.Rxs._
 import d3.all._
 import jquery.JQueryExt._
 import org.scalajs.dom
@@ -36,6 +35,8 @@ object ForceGraph {
     }
   }
 
+
+
   // TODO: cleanup all these crazy function arguments
   def apply[T, N, L](data: ChartData[T], aspectRatio: Double,
                      linkDistance: (Double, Double) => L => Double = {(w: Double, h: Double) => {_: L => 20.0}},
@@ -43,6 +44,8 @@ object ForceGraph {
                      linkStyle: Iterable[L] => L => Seq[JsDom.Modifier] = {ls: Iterable[L] => l: L => List.empty})(
         implicit convert: DataPoints[T] => (IndexedSeq[N], IndexedSeq[L]),
           toLinks: (IndexedSeq[N], IndexedSeq[L]) => IndexedSeq[(Int, Int)]) = {
+    import com.oomagnitude.rx.Rxs._
+    import com.oomagnitude.dom.all._
 
     val (width, height) = Svg.dimensions(aspectRatio)
     val distance = linkDistance(width, height)
@@ -69,17 +72,17 @@ object ForceGraph {
       lines() = force.lines.zipWithIndex.map {
         case (line, index) =>
           st.line(linkToStyle(links(index))).render
-            .bind(sa.x1, line.source.x)
-            .bind(sa.y1, line.source.y)
-            .bind(sa.x2, line.target.x)
-            .bind(sa.y2, line.target.y)
+            .bindOption(sa.x1, line.source.x)
+            .bindOption(sa.y1, line.source.y)
+            .bindOption(sa.x2, line.target.x)
+            .bindOption(sa.y2, line.target.y)
       }.toList
 
       circles() = force.points.zipWithIndex.map {
         case (point, index) =>
           val circle = st.circle(sa.r := 5, nodeToStyle(nodes(index))).render
-            .bind(sa.cx, point.x)
-            .bind(sa.cy, point.y)
+            .bindOption(sa.cx, point.x)
+            .bindOption(sa.cy, point.y)
 
           jQuery(circle).tooltip(literal(container = "body", placement = "right"))
           circle

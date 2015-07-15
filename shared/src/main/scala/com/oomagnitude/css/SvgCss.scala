@@ -1,6 +1,6 @@
 package com.oomagnitude.css
 
-import scalacss.Attr
+import scalacss.{CanIUse, Transform, Attr}
 import scalacss.ValueT.{Number, TypedAttrT1, TypedAttr_Color}
 
 object SvgCss {
@@ -19,4 +19,6 @@ object SvgCss {
   object strokeOpacity extends TypedAttrT1[Number] {
     override val attr = Attr.real("stroke-opacity")
   }
+
+  val fillRule = Attr.real("fillRule", Transform keys CanIUse.flexbox)
 }
