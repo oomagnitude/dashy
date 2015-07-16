@@ -42,8 +42,6 @@ object RadialReingoldTilfordTree {
         st.text(sa.dy:=".31em", sa.textAnchor:=anchor, sa.transform:=trans, node.id))
     }
 
-//    d3.select(self.frameElement).style("height", diameter - 150 + "px");
-
     container.appendChild(svgTag(aspectRatio)(styles.greyBackground,
       st.g(sa.transform:= transform.translate(radius, radius), linkTags, nodeTags)).render)
   }

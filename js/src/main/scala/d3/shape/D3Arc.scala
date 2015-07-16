@@ -4,8 +4,6 @@ import d3._
 import viz.shape.{ArcDatum, Arc}
 import scala.scalajs.js
 
-
-
 class D3Arc extends Arc {
 
   override def apply[T: ArcDatum](datum: T): String = {

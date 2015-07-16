@@ -1,15 +1,32 @@
 package d3.transition
 
-import viz.transition._
+import d3._
+import viz.selection.Selection
+import viz.transition.Transition
 
 import scala.scalajs.js
+import scala.scalajs.js.Dynamic.literal
+import scala.scalajs.js.JSConverters._
 
-class D3Transition(transition: js.Dynamic) extends Transition {
+class D3Transition[T](selection: Selection[T, _], name: String = "") extends Transition[T] {
+  private[this] val transition = {
+    val data = selection.data.indices.map(i => literal(index = i))
+    d3.selectAll(selection.elements.toJSArray).data(data.toJSArray).transition(name)
+  }
+
   /**
    * [[https://github.com/mbostock/d3/wiki/Transitions#delay]]
    */
-  override def delay(millis: Int): Transition = {
+  override def delay(millis: Int): Transition[T] = {
     transition.delay(millis)
+    this
+  }
+
+  /**
+   * [[https://github.com/mbostock/d3/wiki/Transitions#delay]]
+   */
+  override def delay(fn: (T, Int) => Int): Transition[T] = {
+    transition.delay({(d: js.Dynamic, index: Int) => fn(selection.data(index), index)})
     this
   }
 
@@ -18,32 +35,18 @@ class D3Transition(transition: js.Dynamic) extends Transition {
    */
   override def delay: Int = transition.delay().asInstanceOf[Int]
 
-
-//  override def attrTween[A](attr: Attr, interpolate: Double => A): Transition = {
-//    val fn: js.Function1[js.Dynamic, js.Dynamic] = {t: js.Dynamic =>
-//      println(s"calling interpolate with $t")
-//      println(s"result is: ${interpolate(t.asInstanceOf[Double])}")
-//      interpolate(t.asInstanceOf[Double]).asInstanceOf[js.Dynamic]}
-//    transition.attrTween(attr.name, {_: js.Dynamic => fn})
-//    this
-//  }
-
-
-  override def tween(name: String, interpolate: (Double) => Unit): Transition = {
-    val fn: js.Function1[Double, Unit] = interpolate
-    transition.tween(name, {(d: js.Dynamic, i: Int) => fn})
+  override def tween(name: String, factory: (T, Int) => Double => Unit): Transition[T] = {
+    transition.tween(name, {(d: js.Dynamic, i: Int) =>
+      val fn: js.Function1[Double, Unit] = factory(selection.data(i), i)
+      fn
+    })
     this
   }
-//
-//  /**
-//   * [[https://github.com/mbostock/d3/wiki/Transitions#attr]]
-//   */
-//  override def attr[A](name: Attr, value: A): Transition = ???
 
   /**
    * [[https://github.com/mbostock/d3/wiki/Transitions#d3_ease]]
    */
-  override def ease(easeType: String): Transition = ???
+  override def ease(easeType: String): Transition[T] = ???
 
   /**
    * [[https://github.com/mbostock/d3/wiki/Transitions#duration]]
@@ -53,9 +56,16 @@ class D3Transition(transition: js.Dynamic) extends Transition {
   /**
    * [[https://github.com/mbostock/d3/wiki/Transitions#duration]]
    */
-  override def duration(millis: Int): Transition = {
+  override def duration(millis: Int): Transition[T] = {
     transition.duration(millis)
     this
   }
 
+  /**
+   * [[https://github.com/mbostock/d3/wiki/Transitions#duration]]
+   */
+  override def duration(fn: (T, Int) => Int): Transition[T] = {
+    transition.duration({(d: js.Dynamic, index: Int) => fn(selection.data(index), index)})
+    this
+  }
 }

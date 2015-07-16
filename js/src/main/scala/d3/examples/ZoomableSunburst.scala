@@ -32,7 +32,6 @@ object ZoomableSunburst {
 
     val x = d3.scale.linear[Double, Double].range(0, 2 * Math.PI)
     val y = d3.scale.squareRoot.range(0, radius)
-    val color = d3.scale.category20c[String]
 
     implicit val partitionNodeArc = new ArcDatum[PartitionNode] {
       override def outerRadius(d: PartitionNode): Double = Math.max(0, y(d.y + d.dy))
@@ -47,6 +46,7 @@ object ZoomableSunburst {
       .value({ _: StufNThings => 1 })
 
     val arc = d3.shape.arc
+    val color = d3.scale.category20c[String]
     val treeData = new ConcreteTree(JSON.parse(Data.treeJson).asInstanceOf[TestTree])
 
     val partitions = partition.nodes(treeData).map { n =>
@@ -62,20 +62,21 @@ object ZoomableSunburst {
     partitions.onclick({kv: (PartitionNode, Var[String]) =>
       val clickedData = kv._1
       // Set the interpolation for the node that was clicked
-      val xd = d3.interpolate(x.domain.toJSArray, sjs.Array(clickedData.x, clickedData.x + clickedData.dx))
-      val yd = d3.interpolate(y.domain.toJSArray, sjs.Array(clickedData.y, 1.0))
-      val yr = d3.interpolate(y.range.toJSArray, sjs.Array(if (clickedData.y > 0) 20.0 else 0.0, radius))
-
+      val xDomain = d3.interpolate(x.domain.toJSArray, sjs.Array(clickedData.x, clickedData.x + clickedData.dx))
+      val yDomain = d3.interpolate(y.domain.toJSArray, sjs.Array(clickedData.y, 1.0))
+      val yRange = d3.interpolate(y.range.toJSArray, sjs.Array(if (clickedData.y > 0) 20.0 else 0.0, radius))
       // Install a callback for each tick of the transition, so that each element is updated
-      partitions.zipWithIndex.foreach { case ((path, (node, pathArc)), index) =>
-        path.transition(node).duration(1000).tween("arc", {t: Double =>
-          if (index == 0) {
-            x.domain(xd(t))
-            y.domain(yd(t)).range(yr(t))
+      partitions.transition.duration(1000).tween("arc",
+        { case ((node, arcPath), index) =>
+
+          {t: Double =>
+            if (index == 0) {
+              x.domain(xDomain(t))
+              y.domain(yDomain(t)).range(yRange(t))
+            }
+            arcPath() = arc(node)
           }
-          pathArc() = arc(node)
         })
-      }
     })
 
     container.appendChild(svgTag(aspectRatio)(styles.whiteBackground,
