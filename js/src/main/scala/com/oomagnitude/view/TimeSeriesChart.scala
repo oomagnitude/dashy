@@ -16,14 +16,7 @@ object TimeSeriesChart {
   def apply(data: ChartData[Double]): HTMLElement = {
     import Templates._
 
-    val controls = bs.formHorizontal(bs.formGroup(
-      bs.col1(bs.btnGroup(pauseButton(data.paused))),
-      bs.col2(label("refresh millis")),
-      bs.col2(numberInput(data.frequency)),
-      bs.col1(label("seek to")),
-      bs.col2(numberInput(data.location)),
-      bs.col1(label("resolution")),
-      bs.col2(numberInput(data.timestepResolution))))
+    val controls = ChartDataControls(data)
 
     val chartElement = bs.col12.render
     val legendElement = bs.col6.render

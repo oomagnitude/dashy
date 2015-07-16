@@ -31,29 +31,24 @@ object ChartBuilder {
       removablePanel(data.params.title, timeSeriesChart(data), {() => data.close(); remove()})
     }
     channel.bind(forceGraphData) {(data: ChartData[MutualInfos], remove: () => Unit) =>
-      removablePanel(data.params.title, forceGraph[MutualInfos, CellInfo, MutualInfo](data,
+      val graph = forceGraph[MutualInfos, CellInfo, MutualInfo](data,
           aspectRatio = 2,
-          linkDistance = { (width: Double, height: Double) =>
-
-            {m: MutualInfo => (1.0 - m.ejc) * (height / 2)}
-          },
+          linkDistance = { (width: Double, height: Double) => m: MutualInfo => (1.0 - m.ejc) * (height / 2)},
           nodeStyle = { cells: Iterable[CellInfo] =>
             val colorScale = D3Scale.colorScale(cells.map(_.numConnections.toDouble), D3Scale.GreenGradient)
 
             {cell: CellInfo => List(Styles.graphNode, sa.fill := colorScale(cell.numConnections),
               title:=s"${cell.id},${cell.numConnections} connections")}
           },
-          linkStyle = { mutualInfo: Iterable[MutualInfo] =>
-
-            {mutualInfo: MutualInfo => List(Styles.graphLink)}
-          })(forceGraph.mutualInfoToGraph, forceGraph.mutualInfoLinks),
-        {() => data.close(); remove()})
+          linkStyle = { mutualInfo: Iterable[MutualInfo] => mutualInfo: MutualInfo => List(Styles.graphLink)})(forceGraph.mutualInfoToGraph, forceGraph.mutualInfoLinks)
+      removablePanel(data.params.title, SeekableChart(data, graph), {() => data.close(); remove()})
     }
     channel.bind(gaussiansData) {(data: ChartData[LabeledGaussians], remove: () => Unit) =>
       // TODO: extract params in a safe way
       val params = data.params.dataSources.head.parameters.get.asInstanceOf[GaussianParams]
+      val element = Gabor(data, aspectRatio = 1, params)
 
-      removablePanel(data.params.title, com.oomagnitude.view.Gabor(data, aspectRatio = 1, params), {() => data.close(); remove()})
+      removablePanel(data.params.title, SeekableChart(data, element), {() => data.close(); remove()})
     }
 
     val builderData = new ChartModel
@@ -65,13 +60,12 @@ object ChartBuilder {
           val first = builderData.selectedDataSources.items().head
           first.zero match {
             case _: MutualInfos =>
-              forceGraphData.add(new ChartData(builderData.toParams, initiallyPaused = true,
-                {d: ChartData[MutualInfos] => d.location() = 90000; d.next()}))
+              forceGraphData.add(new ChartData(builderData.toParams, initiallyPaused = true))
             case Count(_) | Scalar(_)| Time(_, _) =>
               timeSeriesData.add(new ChartData(builderData.toParams))
             case LabeledGaussians(_) =>
-              gaussiansData.add(new ChartData(builderData.toParams, initiallyPaused = true,
-                {d: ChartData[LabeledGaussians] => d.location() = 90000; d.next()}))
+              // TODO: support time lapse
+              gaussiansData.add(new ChartData(builderData.toParams, initiallyPaused = true))
             case _ => // do nothing
           }
         }

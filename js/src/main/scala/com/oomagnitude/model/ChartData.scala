@@ -5,6 +5,7 @@ import com.oomagnitude.metrics.model.{DataPoint, DataSourceId}
 import com.oomagnitude.rx.CallbackRx
 import org.scalajs.dom.raw.MessageEvent
 import rx._
+import rx.ops._
 import upickle.default._
 import upickle.{default => upickle}
 
@@ -21,6 +22,16 @@ class ChartData[T](val params: ChartParams,
     initiallyPaused, {e => afterOpen(this)})
 
   val signal: Rx[DataPoints[T]] = callbackRx.data
+
+  // For reporting the current timestep
+  // TODO: keep all data points in sync
+  val currentTimestep = Var(0)
+  private[this] var previousTimestep = 0
+
+  Obs(signal) {
+    previousTimestep = currentTimestep()
+    currentTimestep() = if (signal().isEmpty) 0 else signal().head._2.timestep
+  }
 
   private[this] val _clear = Var(true)
   val clearToggle: Rx[Boolean] = _clear
@@ -54,6 +65,10 @@ class ChartData[T](val params: ChartParams,
 
   def next(): Unit = {
     webSocket.next()
+  }
+  
+  def previous(): Unit = {
+    location() = previousTimestep
   }
 
   private def emptyBuffers() = _clear() = !_clear()

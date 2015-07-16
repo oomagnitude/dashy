@@ -91,6 +91,10 @@ object ForceGraph {
       force.drag(circles().toIndexedSeq)
     }
 
-    svg
+    val headingText = {
+      import rx.ops._
+      data.currentTimestep.map(t => s"Timestep $t")
+    }
+    div(bs.row(bs.col12(h3(headingText.asFrag))), bs.row(bs.col12(svg))).render
   }
 }

@@ -42,7 +42,11 @@ object Gabor {
       }
     }
 
-    bs.row(svgs.asFrags).render
+    val headingText = {
+      import rx.ops._
+      data.currentTimestep.map(t => s"Timestep $t")
+    }
+    div(bs.row(bs.col12(h3(headingText.asFrag))), bs.row(svgs.asFrags)).render
   }
 
   def image(data: List[LocatableGaussian], config: GaussianParams, colorScale: LinearScale[Double, String],

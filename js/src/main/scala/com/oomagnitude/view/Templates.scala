@@ -24,7 +24,7 @@ object Templates {
   }
 
   def pauseButton(paused: Var[Boolean], playingText: String = "Pause", pausedText: String = "Resume"): html.Button = {
-    val buttonText = Var(playingText)
+    val buttonText = Var(if (paused()) pausedText else playingText)
     bs.btnDefault(buttonText.asFrag,
       onclick:= { e: MouseEvent =>
         if (paused()) {
