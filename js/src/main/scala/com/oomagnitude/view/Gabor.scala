@@ -25,13 +25,18 @@ object Gabor {
     val (width, height) = Svg.dimensions(aspectRatio)
     val svgs = Var(List.empty[TypedTag[Div]])
 
+    // TODO: config for expected range of values. MNIST is reverse (0 means white, 255 means black)
+    val colorScale = d3.scale.linear[Double, String]
+      .domain(Seq(0.0, 255.0))
+      .range(Seq("#ffffff", "#000000"))
+
     Obs(data.signal) {
       if (data.signal().nonEmpty) {
         val all = data.signal().head._2.value.gaussians
-        val max = all.flatMap(_._2).max
-        val colorScale = d3.scale.linear[Double, String]
-          .domain(Seq(0.0, max.gaussian.mean))
-          .range(Seq("#000000", "#ffffff"))
+//        val max = all.flatMap(_._2).max
+//        val colorScale = d3.scale.linear[Double, String]
+//          .domain(Seq(0.0, max.gaussian.mean))
+//          .range(Seq("#000000", "#ffffff"))
 
         svgs() = all.map { case (_, locatables) =>
           val pixels = image(locatables, params, colorScale, height.toInt, width.toInt)
