@@ -17,10 +17,6 @@ import scalatags.JsDom.{TypedTag, svgAttrs => sa, svgTags => st}
 
 object Gabor {
 
-  implicit val gaussianOrdering = new Ordering[LocatableGaussian] {
-    override def compare(x: LocatableGaussian, y: LocatableGaussian): Int = x.gaussian.mean.compare(y.gaussian.mean)
-  }
-
   def apply(data: ChartData[LabeledGaussians], aspectRatio: Double, params: GaussianParams) = {
     val (width, height) = Svg.dimensions(aspectRatio)
     val svgs = Var(List.empty[TypedTag[Div]])
@@ -32,14 +28,14 @@ object Gabor {
 
     Obs(data.signal) {
       if (data.signal().nonEmpty) {
-        val all = data.signal().head._2.value.gaussians
+        val dataPoint = data.signal().head._2.value
 //        val max = all.flatMap(_._2).max
 //        val colorScale = d3.scale.linear[Double, String]
 //          .domain(Seq(0.0, max.gaussian.mean))
 //          .range(Seq("#000000", "#ffffff"))
 
-        svgs() = all.map { case (_, locatables) =>
-          val pixels = image(locatables, params, colorScale, height.toInt, width.toInt)
+        svgs() = List(dataPoint.gaussians, dataPoint.samples).map { vector =>
+          val pixels = image(vector, params, colorScale, height.toInt, width.toInt)
           bs.col3(Svg(aspectRatio)(style.salmonBackground, pixels))
         }
       } else {
@@ -54,7 +50,7 @@ object Gabor {
     div(bs.row(bs.col12(h3(headingText.asFrag))), bs.row(svgs.asFrags)).render
   }
 
-  def image(data: List[LocatableGaussian], config: GaussianParams, colorScale: LinearScale[Double, String],
+  def image(data: scala.Vector[scala.Vector[Gaussian]], config: GaussianParams, colorScale: LinearScale[Double, String],
             canvasHeight: Int, canvasWidth: Int) = {
 
     val heightDomain = (0 to config.geometry.height).toSeq
@@ -65,14 +61,15 @@ object Gabor {
 
     val opacityScale = d3.scale.linear[Double, Double].domain(Seq(0.0, config.maxPrecision)).range(Seq(0.0, 1.0))
 
-    if (data.nonEmpty) {
-      data.map { obj =>
-        val color = colorScale(obj.gaussian.mean)
-        val opacity = opacityScale(obj.gaussian.precision)
-        st.rect(sa.x:= sideLength*obj.location.x, sa.y:= sideLength*obj.location.y,
-          width:=sideLength, height:=sideLength, sa.opacity:=opacity, sa.fill:=color)
-      }
+    for {
+      y <- data.indices
+      x <- data(y).indices
+      obj = data(y)(x)
+      color = colorScale(obj.mean)
+      opacity = opacityScale(obj.precision)
+    } yield {
+      st.rect(sa.x:= sideLength*x, sa.y:= sideLength*y,
+        width:=sideLength, height:=sideLength, sa.opacity:=opacity, sa.fill:=color)
     }
-    else List.empty
   }
 }

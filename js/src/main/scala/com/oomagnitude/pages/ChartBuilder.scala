@@ -63,7 +63,7 @@ object ChartBuilder {
               forceGraphData.add(new ChartData(builderData.toParams, initiallyPaused = true))
             case Count(_) | Scalar(_)| Time(_, _) =>
               timeSeriesData.add(new ChartData(builderData.toParams))
-            case LabeledGaussians(_) =>
+            case LabeledGaussians(_, _, _) =>
               // TODO: support time lapse
               gaussiansData.add(new ChartData(builderData.toParams, initiallyPaused = true))
             case _ => // do nothing
