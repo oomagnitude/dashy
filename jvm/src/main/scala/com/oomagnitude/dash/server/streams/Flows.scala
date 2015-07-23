@@ -143,7 +143,9 @@ object Flows {
       val (first, second) =
         if (samples.head.timestep < samples(1).timestep) (samples.head, samples(1))
         else (samples(1), samples.head)
-      val elapsed = (second.value.elapsed - first.value.elapsed) / (second.value.count - first.value.count)
+      val elapsed =
+        if (second.value.count <= first.value.count) 0.0
+        else (second.value.elapsed - first.value.elapsed) / (second.value.count - first.value.count)
       DataPoint(second.timestep, elapsed)
   }
 
@@ -152,7 +154,9 @@ object Flows {
       val (first, second) =
         if (samples.head.timestep < samples(1).timestep) (samples.head, samples(1))
         else (samples(1), samples.head)
-      val rate = (second.value.count - first.value.count) / (second.timestep - first.timestep).toDouble
+      val rate =
+        if (second.timestep <= first.timestep) 0.0
+        else (second.value.count - first.value.count) / (second.timestep - first.timestep).toDouble
       DataPoint(second.timestep, rate)
   }
 
