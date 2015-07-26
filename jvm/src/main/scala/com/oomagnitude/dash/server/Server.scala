@@ -27,6 +27,7 @@ object Server {
   val JsResources = JsRoot.resolve("classes").resolve("js")
   val ScalaJSOutput = JsRoot
   val CssOutput = JsRoot.resolve("classes").resolve("css")
+  val HtmlOutput = JsRoot.resolve("classes").resolve("html")
 }
 
 class Server(api: ExperimentApi)(implicit fm: Materializer, system: ActorSystem,
@@ -53,6 +54,12 @@ class Server(api: ExperimentApi)(implicit fm: Materializer, system: ActorSystem,
                 HttpEntity(
                   MediaTypes.`text/html`,
                   "<!DOCTYPE html>\n" + Page.skeleton(Page.vizPages(vizName)).render
+                )
+              }
+            } else if (vizName == "timerAngular") {
+              complete {
+                HttpEntity(
+                  MediaTypes.`text/html`, HtmlOutput.resolve("timer.html").toFile
                 )
               }
             } else {
@@ -98,6 +105,8 @@ class Server(api: ExperimentApi)(implicit fm: Materializer, system: ActorSystem,
                 untypedMessageFlow(actor)
                 handleWebsocketMessages(untypedMessageFlow(actor).via(reportErrorsFlow))
             }
+          } ~ path("time") {
+            handleWebsocketMessages(timer(delay = 0.seconds, interval = 1.second).via(reportErrorsFlow))
           }
         } ~
         getFromResourceDirectory("web")

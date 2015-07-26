@@ -1,20 +1,21 @@
-package d3.examples
+package examples.d3
 
 import com.oomagnitude.css._
-import d3.examples.Data._
 import org.scalajs.dom.html
 import rx._
 import svg._
 import upickle.{default => upickle}
 import viz.layout.{CoordinateAndExtent, LayoutNode}
 import viz.shape.ArcDatum
+import d3.all._
+import Data._
 
-import scala.scalajs.js.JSConverters._
 import scala.scalajs.js.annotation.JSExport
 import scala.scalajs.{js => sjs}
 import scalacss.ScalatagsCss._
 import scalatags.JsDom.all._
 import scalatags.JsDom.{svgAttrs => sa, svgTags => st}
+import scala.scalajs.js.JSConverters._
 
 /**
  * [[http://bl.ocks.org/mbostock/4348373]]
@@ -25,7 +26,6 @@ object ZoomableSunburst {
   @JSExport
   def main(container: html.Div): Unit = {
     import com.oomagnitude.dom.all._
-    import d3.all._
 
     val aspectRatio = 1.3714
     val (width, height) = viz.dimensions(aspectRatio)

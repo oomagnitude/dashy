@@ -1,8 +1,8 @@
-package d3.examples
+package examples.d3
 
 import com.oomagnitude.css._
 import d3.all._
-import Data._
+import examples.d3.Data._
 import org.scalajs.dom.html
 import svg._
 import upickle.{default => upickle}

@@ -213,4 +213,26 @@ object Flows {
       (zip.in1, unzip.outlet)
     }
   }
+
+  def timer(delay: FiniteDuration, interval: FiniteDuration): Flow[Message, Message, Any] = {
+    Flow() { implicit builder =>
+      import FlowGraph.Implicits._
+
+      val merge = builder.add(Merge[String](2))
+      val filter = builder.add(Flow[String].filter(_ => false))
+
+      // convert to string so we can connect to merge
+      val mapMsgToEmpty = builder.add(Flow[Message].map[String]{ msg => "" })
+      val mapStringToMsg = builder.add(Flow[String].map[Message]{TextMessage.Strict})
+      // TODO: counter (zip tick with
+      val numberSource = builder.add(Source(Stream.from(0).map(_.toString)))
+      val throttledFlow = builder.add(throttled[String](delay, interval))
+
+      numberSource ~> throttledFlow ~> merge ~> mapStringToMsg
+            mapMsgToEmpty ~> filter ~> merge
+
+      (mapMsgToEmpty.inlet, mapStringToMsg.outlet)
+    }
+  }
+
 }

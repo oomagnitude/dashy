@@ -9,18 +9,22 @@ import scalatags.Text.all._
 
 object Page {
   val ChartBuilderBoot = "com.oomagnitude.pages.ChartBuilder().main(document.getElementById('contents'))"
-  val TreeBoot = "d3.examples.ReingoldTilfordTree().main(document.getElementById('contents'))"
-  val RadialTreeBoot = "d3.examples.RadialReingoldTilfordTree().main(document.getElementById('contents'))"
-  val ZoomablePartitionSunburstBoot = "d3.examples.ZoomableSunburst().main(document.getElementById('contents'))"
-  val ForceGraphBoot = "d3.examples.ForceDirectedGraph().main(document.getElementById('contents'))"
-  val ForceGraphJsBoot = "d3.examples.ForceDirectedGraphJs().main(document.getElementById('contents'))"
+  val TreeBoot = "examples.d3.ReingoldTilfordTree().main(document.getElementById('contents'))"
+  val RadialTreeBoot = "examples.d3.RadialReingoldTilfordTree().main(document.getElementById('contents'))"
+  val ZoomablePartitionSunburstBoot = "examples.d3.ZoomableSunburst().main(document.getElementById('contents'))"
+  val ForceGraphBoot = "examples.d3.ForceDirectedGraph().main(document.getElementById('contents'))"
+  val ForceGraphJsBoot = "examples.d3.ForceDirectedGraphJs().main(document.getElementById('contents'))"
+  val TimerBoot = "examples.rx.Timer().main(document.getElementById('contents'))"
+  val TimerAngularBoot = "examples.rx.TimerAngular().main(document.getElementById('contents'))"
 
   val vizPages = Map(
     "tree" -> TreeBoot,
     "radialTree" -> RadialTreeBoot,
     "sunburst" -> ZoomablePartitionSunburstBoot,
     "forceGraph" -> ForceGraphBoot,
-    "forceGraphJs" -> ForceGraphJsBoot
+    "forceGraphJs" -> ForceGraphJsBoot,
+    "timer" -> TimerBoot//,
+//    "timerAngular" -> TimerAngularBoot
   )
 
   def skeleton(boot: String) =
@@ -43,6 +47,7 @@ object Page {
         script(src:="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.js"),
         script(src:="https://cdnjs.cloudflare.com/ajax/libs/rickshaw/1.5.1/rickshaw.js"),
         script(src:="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.3/moment.min.js"),
+        script(src:="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.3/angular.min.js"),
         script(src:="/js/scalajs-dashboard-fastopt.js")
       )
     )

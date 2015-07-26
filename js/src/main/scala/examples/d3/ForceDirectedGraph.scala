@@ -1,4 +1,4 @@
-package d3.examples
+package examples.d3
 
 import com.oomagnitude.css.{Styles => css}
 import com.oomagnitude.dom.all._

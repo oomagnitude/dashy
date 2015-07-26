@@ -1,8 +1,9 @@
-package d3.examples
+package examples.d3
 
 import org.scalajs.dom.html
+
+import scala.scalajs.js
 import scala.scalajs.js.JSON
-import scalajs.js
 import scala.scalajs.js.annotation.JSExport
 
 /**

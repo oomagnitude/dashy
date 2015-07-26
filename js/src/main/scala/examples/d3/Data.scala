@@ -1,4 +1,4 @@
-package d3.examples
+package examples.d3
 
 import upickle.Js.Value
 import upickle.{Js, default => upickle}
