@@ -3,8 +3,6 @@ package com.oomagnitude
 import _root_.rx._
 import org.scalajs.{dom => sdom}
 
-import scala.scalajs.{js => sjs}
-
 package object dom {
   object all {
 

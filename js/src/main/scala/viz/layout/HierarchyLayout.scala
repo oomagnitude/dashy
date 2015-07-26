@@ -1,18 +1,33 @@
 package viz.layout
 
-import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.JSExportAll
+import upickle.{Js, default => upickle}
 
-@JSExportAll
+object Tree {
+  implicit val writer = new upickle.Writer[Tree] {
+    override def write0: (Tree) => Js.Value = {
+      case tree if tree.children.nonEmpty =>
+        Js.Obj("id" -> Js.Str(tree.id), "children" -> Js.Arr(tree.children.map(write0):_*))
+      case tree =>
+        Js.Obj("id" -> Js.Str(tree.id))
+    }
+  }
+}
+
 trait Tree {
-  def children: UndefOr[Seq[Tree]]
+  def children: Seq[Tree]
   def id: String
 }
 
-@JSExportAll
 case class TreeLink[N](source: N, target: N)
 
-case class StufNThings(id: String, depth: Int, parentId: Option[String], childrenIds: Seq[String])
+case class NodeStructure(parentId: Option[String], childrenIds: Seq[String], depth: Int)
+
+case class LayoutNode[T](id: String, structure: NodeStructure, layout: T) {
+  val isLeaf: Boolean = structure.childrenIds.isEmpty
+  val isRoot: Boolean = structure.parentId.isEmpty
+}
+
+case class Hierarchy[N](nodes: Seq[LayoutNode[N]], links: Seq[TreeLink[LayoutNode[N]]])
 
 /**
   * derive a custom hierarchical layout implementation
@@ -20,19 +35,26 @@ case class StufNThings(id: String, depth: Int, parentId: Option[String], childre
   */
 trait HierarchyLayout[N] {
   /**
-   * [[https://github.com/mbostock/d3/wiki/Hierarchy-Layout#_hierarchy]]
-   */
-  def apply(root: Tree): Seq[N]
-
-  /**
+   * Computes the layout of a given tree
+   *
+   * Combines these operations into one:
    * [[https://github.com/mbostock/d3/wiki/Partition-Layout#nodes]]
-   */
-  def nodes(root: Tree): Seq[N] = apply(root)
-
-  /**
    * [[https://github.com/mbostock/d3/wiki/Hierarchy-Layout#links]]
+   *
+   * @param root the root node of the tree
+   * @return the layout, including x/y coordinates of the nodes and links connecting the nodes
    */
-  def links(root: Tree): Seq[TreeLink[N]]
+  def layout(root: Tree): Hierarchy[N]
+
+  protected def parentAndChildrenMap(root: Tree, depth: Int, parentId: Option[String],
+                                   nodeMap: Map[String, NodeStructure]): Map[String, NodeStructure] = {
+    (if (root.children.isEmpty) nodeMap
+    else {
+      root.children.foldLeft(nodeMap) { (map, child) =>
+        parentAndChildrenMap(child, depth + 1, Some(root.id), map)
+      }
+    }) + (root.id -> NodeStructure(parentId, root.children.map(_.id), depth))
+  }
 }
 
 trait Sized {
@@ -43,7 +65,7 @@ trait Sorted {
   /**
    * [[https://github.com/mbostock/d3/wiki/Hierarchy-Layout#sort]]
    */
-  def sort(comparator: (StufNThings, StufNThings) => Double): this.type
+  def sort(comparator: (NodeStructure, NodeStructure) => Double): this.type
 
   /**
    * [[https://github.com/mbostock/d3/wiki/Hierarchy-Layout#sort]]
@@ -55,12 +77,17 @@ trait Value {
   /**
    * [[https://github.com/mbostock/d3/wiki/Hierarchy-Layout#value]]
    */
-  def value(fn: StufNThings => Double): this.type
+  def value(fn: (String, NodeStructure) => Double): this.type
+
+  /**
+   * [[https://github.com/mbostock/d3/wiki/Hierarchy-Layout#value]]
+   */
+  def value(const: Double): this.type
 }
 
 trait Revalue {
   /**
    * [[https://github.com/mbostock/d3/wiki/Hierarchy-Layout#revalue]]
    */
-  def revalue(root: StufNThings): this.type
+  def revalue(root: NodeStructure): this.type
 }

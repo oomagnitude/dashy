@@ -33,7 +33,7 @@ object ChartBuilder {
     channel.bind(forceGraphData) {(data: ChartData[MutualInfos], remove: () => Unit) =>
       val graph = forceGraph[MutualInfos, CellInfo, MutualInfo](data,
           aspectRatio = 2,
-          linkDistance = { (width: Double, height: Double) => m: MutualInfo => (1.0 - m.ejc) * (height / 2)},
+          linkDistance = { (width: Double, height: Double) => m: MutualInfo => (height / 20) + (1.0 - m.ejc) * (height / 10)},
           nodeStyle = { cells: Iterable[CellInfo] =>
             val colorScale = D3Scale.colorScale(cells.map(_.numConnections.toDouble), D3Scale.GreenGradient)
 

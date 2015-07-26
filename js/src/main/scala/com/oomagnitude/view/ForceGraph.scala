@@ -47,11 +47,12 @@ object ForceGraph {
     import com.oomagnitude.rx.Rxs._
     import com.oomagnitude.dom.all._
 
-    val (width, height) = Svg.dimensions(aspectRatio)
+    val (width, height) = viz.dimensions(aspectRatio)
     val distance = linkDistance(width, height)
 
     val force = d3.layout.force
-      .charge(-120)
+      .charge(-30)
+      .chargeDistance(100)
       .size(width, height)
 
     val lines = Var(List.empty[dom.Element])

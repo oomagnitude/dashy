@@ -18,7 +18,7 @@ import scalatags.JsDom.{TypedTag, svgAttrs => sa, svgTags => st}
 object Gabor {
 
   def apply(data: ChartData[LabeledGaussians], aspectRatio: Double, params: GaussianParams) = {
-    val (width, height) = Svg.dimensions(aspectRatio)
+    val (width, height) = viz.dimensions(aspectRatio)
     val svgs = Var(List.empty[TypedTag[Div]])
 
     // TODO: config for expected range of values. MNIST is reverse (0 means white, 255 means black)

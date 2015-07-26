@@ -168,17 +168,22 @@ class D3TimeScale[D, R](scale: js.Dynamic = d3.time.scale())
   override def tickFormat(count: Int): (Double) => String = scale.tickFormat(count).asInstanceOf[(Double) => String]
 }
 
-class D3OrdinalScale[D, R](scale: js.Dynamic = d3.scale.ordinal())
-    extends D3Scale[D, R](scale)
-    with OrdinalScale[D, R] {
-  override def rangePoints(min: R, max: R, padding: Int): OrdinalScale[D, R] =
-    new D3OrdinalScale[D, R](scale.copy().rangePoints(js.Array(min, max), padding))
+class D3OrdinalScale[D, R](scale: js.Dynamic = d3.scale.ordinal()) extends D3Scale[D, R](scale) with OrdinalScale[D, R] {
 
-  override def rangeRoundBands(min: R, max: R): OrdinalScale[D, R] =
-    new D3OrdinalScale[D, R](scale.copy().rangeRoundBands(js.Array(min, max)))
+  override def rangePoints(min: R, max: R, padding: Int): OrdinalScale[D, R] = {
+    scale.rangePoints(js.Array(min, max), padding)
+    this
+  }
 
-  override def rangeRoundBands(min: R, max: R, padding: Int, outerPadding: Int): OrdinalScale[D, R] =
-    new D3OrdinalScale[D, R](scale.copy().rangeRoundBands(js.Array(min, max), padding, outerPadding))
+  override def rangeRoundBands(min: R, max: R): OrdinalScale[D, R] = {
+    scale.rangeRoundBands(js.Array(min, max))
+    this
+  }
+
+  override def rangeRoundBands(min: R, max: R, padding: Int, outerPadding: Int): OrdinalScale[D, R] = {
+    scale.rangeRoundBands(js.Array(min, max), padding, outerPadding)
+    this
+  }
 
   override def rangeBand: Double = scale.rangeBand().asInstanceOf[Double]
 
@@ -187,14 +192,20 @@ class D3OrdinalScale[D, R](scale: js.Dynamic = d3.scale.ordinal())
     Extent(ext(0).asInstanceOf[R], ext(1).asInstanceOf[R])
   }
 
-  override def rangeRoundPoints(min: R, max: R, padding: Int): OrdinalScale[D, R] =
-    new D3OrdinalScale[D, R](scale.copy().rangeRoundPoints(js.Array(min, max), padding))
+  override def rangeRoundPoints(min: R, max: R, padding: Int): OrdinalScale[D, R] = {
+    scale.rangeRoundPoints(js.Array(min, max), padding)
+    this
+  }
 
-  override def rangeBands(min: R, max: R): OrdinalScale[D, R] =
-    new D3OrdinalScale[D, R](scale.copy().rangeBands(js.Array(min, max)))
+  override def rangeBands(min: R, max: R): OrdinalScale[D, R] = {
+    scale.rangeBands(js.Array(min, max))
+    this
+  }
 
-  override def rangeBands(min: R, max: R, padding: Int, outerPadding: Int): OrdinalScale[D, R] =
-    new D3OrdinalScale[D, R](scale.copy().rangeBands(js.Array(min, max), padding, outerPadding))
+  override def rangeBands(min: R, max: R, padding: Int, outerPadding: Int): OrdinalScale[D, R] = {
+    scale.rangeBands(js.Array(min, max), padding, outerPadding)
+    this
+  }
 }
 
 class D3ThresholdScale[D, R](scale: js.Dynamic = d3.scale.threshold())

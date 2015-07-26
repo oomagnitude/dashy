@@ -4,7 +4,7 @@ import java.nio.file.Paths
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshalling.ToResponseMarshallable._
-import akka.http.scaladsl.model.{HttpEntity, MediaTypes, RequestEntity}
+import akka.http.scaladsl.model.{StatusCodes, HttpEntity, MediaTypes, RequestEntity}
 import akka.http.scaladsl.server.Directives
 import akka.stream.Materializer
 import com.oomagnitude.api.StreamControl.Resume
@@ -17,7 +17,7 @@ import com.oomagnitude.metrics.filesystem._
 import com.oomagnitude.metrics.model.Metrics._
 import com.oomagnitude.metrics.model._
 import upickle.{default => upickle}
-
+import StatusCodes._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor}
 
@@ -46,31 +46,20 @@ class Server(api: ExperimentApi)(implicit fm: Materializer, system: ActorSystem,
           )
         }
       } ~
-        path("tree") {
-          complete {
-            HttpEntity(
-              MediaTypes.`text/html`,
-              "<!DOCTYPE html>\n" + Page.skeleton(Page.TreeBoot).render
-            )
+        pathPrefix("viz") {
+          path(Segment) { vizName =>
+            if (Page.vizPages.contains(vizName)) {
+              complete {
+                HttpEntity(
+                  MediaTypes.`text/html`,
+                  "<!DOCTYPE html>\n" + Page.skeleton(Page.vizPages(vizName)).render
+                )
+              }
+            } else {
+              complete(NotFound, s"No such visualization $vizName")
+            }
           }
         } ~
-        path("radialTree") {
-          complete {
-            HttpEntity(
-              MediaTypes.`text/html`,
-              "<!DOCTYPE html>\n" + Page.skeleton(Page.RadialTreeBoot).render
-            )
-          }
-        } ~
-        path("sunburst") {
-          complete {
-            HttpEntity(
-              MediaTypes.`text/html`,
-              "<!DOCTYPE html>\n" + Page.skeleton(Page.ZoomablePartitionSunburstBoot).render
-            )
-          }
-        } ~        // Scala-JS puts them in the root of the resource directory per default,
-        // so that's where we pick them up
         pathPrefix("js") {
           path(Segment) { filename =>
             val outputFile = ScalaJSOutput.resolve(filename).toFile

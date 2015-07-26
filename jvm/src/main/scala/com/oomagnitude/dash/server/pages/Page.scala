@@ -12,6 +12,16 @@ object Page {
   val TreeBoot = "d3.examples.ReingoldTilfordTree().main(document.getElementById('contents'))"
   val RadialTreeBoot = "d3.examples.RadialReingoldTilfordTree().main(document.getElementById('contents'))"
   val ZoomablePartitionSunburstBoot = "d3.examples.ZoomableSunburst().main(document.getElementById('contents'))"
+  val ForceGraphBoot = "d3.examples.ForceDirectedGraph().main(document.getElementById('contents'))"
+  val ForceGraphJsBoot = "d3.examples.ForceDirectedGraphJs().main(document.getElementById('contents'))"
+
+  val vizPages = Map(
+    "tree" -> TreeBoot,
+    "radialTree" -> RadialTreeBoot,
+    "sunburst" -> ZoomablePartitionSunburstBoot,
+    "forceGraph" -> ForceGraphBoot,
+    "forceGraphJs" -> ForceGraphJsBoot
+  )
 
   def skeleton(boot: String) =
     html(
@@ -21,7 +31,7 @@ object Page {
         link(rel:="stylesheet", href:="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.css"),
         link(rel:="stylesheet", href:="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.4/css/bootstrap.min.css"),
         link(rel:="stylesheet", href:="https://cdnjs.cloudflare.com/ajax/libs/rickshaw/1.5.1/rickshaw.min.css"),
-        link(rel:="stylesheet", href:="css/graph.css")
+        link(rel:="stylesheet", href:="/css/graph.css")
       ),
       body(
         onload:=boot,
@@ -33,7 +43,7 @@ object Page {
         script(src:="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.js"),
         script(src:="https://cdnjs.cloudflare.com/ajax/libs/rickshaw/1.5.1/rickshaw.js"),
         script(src:="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.3/moment.min.js"),
-        script(src:="js/scalajs-dashboard-fastopt.js")
+        script(src:="/js/scalajs-dashboard-fastopt.js")
       )
     )
 }

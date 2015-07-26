@@ -1,19 +1,17 @@
 package viz.shape
 
-import viz.layout.{TreeLink, TreeNode}
+import viz.layout.{Coordinate, TreeLink}
 
 trait Diagonal {
-  // TODO: change to type T instead of TreeNode
+  /**
+   * [[https://github.com/mbostock/d3/wiki/SVG-Shapes#_diagonal]]
+   */
+  def apply(datum: TreeLink[Coordinate]): String
 
   /**
    * [[https://github.com/mbostock/d3/wiki/SVG-Shapes#_diagonal]]
    */
-  def apply(datum: TreeLink[TreeNode]): String
-
-  /**
-   * [[https://github.com/mbostock/d3/wiki/SVG-Shapes#_diagonal]]
-   */
-  def apply(datum: TreeLink[TreeNode], index: Int): String
+  def apply(datum: TreeLink[Coordinate], index: Int): String
 
   /**
    * [[https://github.com/mbostock/d3/wiki/SVG-Shapes#_diagonal]]
