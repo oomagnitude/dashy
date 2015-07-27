@@ -1,5 +1,6 @@
 package examples.d3
 
+import d3.facade.layout.{GraphLinkForce, GraphNodeForce}
 import org.scalajs.dom.html
 
 import scala.scalajs.js
@@ -10,8 +11,8 @@ import scala.scalajs.js.annotation.JSExport
  * [[http://bl.ocks.org/mbostock/4062045]]
  */
 @JSExport
-object ForceDirectedGraphJs {
-  val d3 = js.Dynamic.global.d3
+object ForceDirectedGraphFacade {
+  val d3 = _root_.d3.facade.d3.d3
 
   @JSExport
   def main(container: html.Div): Unit = {
@@ -23,27 +24,29 @@ object ForceDirectedGraphJs {
     val force = d3.layout.force()
       .charge(-120)
       .linkDistance(30)
-      .size(js.Array(width, height))
+      .size(js.Array(width.toDouble, height.toDouble))
 
     val svg = d3.select(container).append("svg")
       .attr("width", width)
       .attr("height", height)
 
     val graph = JSON.parse(Data.graphJson)
+    val nodes = graph.nodes.asInstanceOf[js.Array[GraphNodeForce]]
+    val links = graph.links.asInstanceOf[js.Array[GraphLinkForce]]
 
     force
-      .nodes(graph.nodes)
-      .links(graph.links)
+      .nodes(nodes)
+      .links(links)
       .start()
 
     val link = svg.selectAll(".link")
-      .data(graph.links)
+      .data(links.map(_.asInstanceOf[js.Any]))
       .enter().append("line")
       .attr("class", "link")
       .style("stroke-width", {d: js.Dynamic => math.sqrt(d.value.asInstanceOf[Double])})
 
     val node = svg.selectAll(".node")
-      .data(graph.nodes)
+      .data(nodes.map(_.asInstanceOf[js.Any]))
       .enter().append("circle")
       .attr("class", "node")
       .attr("r", 5)

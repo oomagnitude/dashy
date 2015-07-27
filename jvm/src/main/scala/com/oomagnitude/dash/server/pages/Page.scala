@@ -13,7 +13,8 @@ object Page {
   val RadialTreeBoot = "examples.d3.RadialReingoldTilfordTree().main(document.getElementById('contents'))"
   val ZoomablePartitionSunburstBoot = "examples.d3.ZoomableSunburst().main(document.getElementById('contents'))"
   val ForceGraphBoot = "examples.d3.ForceDirectedGraph().main(document.getElementById('contents'))"
-  val ForceGraphJsBoot = "examples.d3.ForceDirectedGraphJs().main(document.getElementById('contents'))"
+  val ForceGraphDynamicBoot = "examples.d3.ForceDirectedGraphDynamic().main(document.getElementById('contents'))"
+  val ForceGraphFacadeBoot = "examples.d3.ForceDirectedGraphFacade().main(document.getElementById('contents'))"
   val TimerBoot = "examples.rx.Timer().main(document.getElementById('contents'))"
   val TimerAngularBoot = "examples.rx.TimerAngular().main(document.getElementById('contents'))"
 
@@ -21,10 +22,10 @@ object Page {
     "tree" -> TreeBoot,
     "radialTree" -> RadialTreeBoot,
     "sunburst" -> ZoomablePartitionSunburstBoot,
-    "forceGraph" -> ForceGraphBoot,
-    "forceGraphJs" -> ForceGraphJsBoot,
-    "timer" -> TimerBoot//,
-//    "timerAngular" -> TimerAngularBoot
+    "forceGraphRx" -> ForceGraphBoot,
+    "forceGraphDynamic" -> ForceGraphDynamicBoot,
+    "forceGraphFacade" -> ForceGraphFacadeBoot,
+    "timerRx" -> TimerBoot
   )
 
   def skeleton(boot: String) =
