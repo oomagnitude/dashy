@@ -29,10 +29,6 @@ object Gabor {
     Obs(data.signal) {
       if (data.signal().nonEmpty) {
         val dataPoint = data.signal().head._2.value
-//        val max = all.flatMap(_._2).max
-//        val colorScale = d3.scale.linear[Double, String]
-//          .domain(Seq(0.0, max.gaussian.mean))
-//          .range(Seq("#000000", "#ffffff"))
 
         svgs() = List(dataPoint.gaussians, dataPoint.samples).map { vector =>
           val pixels = image(vector, params, colorScale, height.toInt, width.toInt)

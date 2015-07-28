@@ -23,7 +23,7 @@ object ForceDirectedGraph {
 
   @JSExport
   def main(container: html.Div): Unit = {
-    val graphData = upickle.read[Graph](Data.graphJson)
+    val graph = upickle.read[Graph](Data.graphJson)
 
     val aspectRatio = 1.4
     val (width, height) = viz.dimensions(aspectRatio)
@@ -34,12 +34,12 @@ object ForceDirectedGraph {
       .linkDistance(30)
       .size(width, height)
 
-    force.init(graphData.nodes.size, graphData.links.map(link => (link.source, link.target))).start()
+    force.init(graph.nodes.size, graph.links.map(l => (l.source, l.target))).start()
 
     val lines = force.lines.zipWithIndex.map {
       case (line, index) =>
-        val linkData = graphData.links(index)
-        st.line(css.graphLink, sa.strokeWidth:=math.sqrt(linkData.value)).render
+        val link = graph.links(index)
+        st.line(css.graphLink, sa.strokeWidth:=math.sqrt(link.value)).render
           .bindOption(sa.x1, line.source.x)
           .bindOption(sa.y1, line.source.y)
           .bindOption(sa.x2, line.target.x)
@@ -48,7 +48,7 @@ object ForceDirectedGraph {
 
     val circles = force.points.zipWithIndex.map {
       case (point, index) =>
-        val node = graphData.nodes(index)
+        val node = graph.nodes(index)
         st.circle(css.graphNode, sa.r:= 5, sa.fill:=color(node.group)).render
           .bindOption(sa.cx, point.x)
           .bindOption(sa.cy, point.y)
