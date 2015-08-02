@@ -5,7 +5,6 @@ import org.scalajs.dom.raw.HTMLElement
 
 import scalatags.JsDom
 import scalatags.JsDom.all._
-import org.scalajs.dom
 
 object RemovablePanel {
   def apply(panelTitle: Option[String], body: JsDom.Modifier, removed: () => Unit): HTMLElement = {

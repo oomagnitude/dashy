@@ -23,14 +23,6 @@ object Rxs {
       last
     }
   }
-  
-  implicit class RxOptOps[T](item: Rx[Option[T]]) {
-    def flatten(initial: T): Rx[T] = {
-      val flattened = Var(initial)
-      Obs(item) { item().foreach {flattened() = _} }
-      flattened
-    }
-  }
 
   implicit class RxListOps[T](items: Rx[List[T]])(implicit tToFrag: T => Frag) {
     def asFrags(postAppend: dom.Node => Unit): Frag = {
@@ -79,13 +71,4 @@ object Rxs {
       }
     }
   }
-  
-  def conditional[T, V](required: Rx[Option[T]], source: Rx[String], toV: (T, String) => V): Rx[Option[V]] =
-    Rx {
-      required().flatMap {
-        t =>
-          if (source().nonEmpty) Some(toV(t, source()))
-          else None
-      }
-    }
 }

@@ -5,7 +5,6 @@ import com.oomagnitude.metrics.model.{DataPoint, DataSourceId}
 import com.oomagnitude.rx.CallbackRx
 import org.scalajs.dom.raw.MessageEvent
 import rx._
-import rx.ops._
 import upickle.default._
 import upickle.{default => upickle}
 
