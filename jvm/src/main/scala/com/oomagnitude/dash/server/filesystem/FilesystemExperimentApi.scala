@@ -20,7 +20,7 @@ class FilesystemExperimentApi(implicit executionContext: ExecutionContextExecuto
   }
 
   override def experimentRuns(id: ExperimentId): Future[List[ExperimentRunId]] = {
-    filteredListing(id.toPath) { (file, name) => true }.map {
+    filteredListing(id.path) { (file, name) => true }.map {
       case null => List.empty[ExperimentRunId]
       case subdirs => subdirs.filterNot(_.isHidden).filter(_.isDirectory).map(s => ExperimentRunId(id, s.getName))
     }
@@ -34,7 +34,7 @@ class FilesystemExperimentApi(implicit executionContext: ExecutionContextExecuto
   override def metadata(dataSources: List[DataSourceId]): Future[List[MetricMetadata]] = {
     Future.sequence(dataSources.map { id =>
       Future {
-        val source = io.Source.fromFile(id.toMetaPath.toFile)
+        val source = io.Source.fromFile(id.metaPath.toFile)
         try read[MetricMetadata](source.getLines().mkString) finally source.close()
       }
     })

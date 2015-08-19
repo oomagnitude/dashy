@@ -49,6 +49,7 @@ object ForceDirectedGraphDynamic {
       .attr("r", 5)
       .style("fill", {d: js.Dynamic => color(d.group)})
       .call(force.drag)
+    .homer("doh!")
 
     node.append("title")
       .text({d: js.Dynamic => d.name})

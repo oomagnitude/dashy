@@ -97,7 +97,7 @@ class Server(api: ExperimentApi)(implicit fm: Materializer, system: ActorSystem,
                     case _: Scalar => parseJson[DataPoint[Scalar]].map(dp => DataPoint(dp.timestep, dp.value.value)).via(toJs)
                     case _ => parseJs
                   }
-                  StreamSource(metadata.id, metadata.id.toJsonPath, flow)
+                  StreamSource(metadata.id, metadata.id.jsonPath, flow)
                 }
 
                 val actor = system.actorOf(MultiplexFileController.props(flows, defaultConfig))
