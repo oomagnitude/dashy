@@ -4,13 +4,13 @@ import com.oomagnitude.api.DataPoints
 import com.oomagnitude.css.{Styles => css}
 import com.oomagnitude.metrics.model.Metrics.{CellInfo, MutualInfo, MutualInfos}
 import com.oomagnitude.model.ChartData
-import d3.all._
+import goggles.d3.all._
 import jquery.JQueryExt._
 import org.scalajs.dom
 import org.scalajs.jquery._
 import rx._
-import svg.Svg
-import viz.layout.ForceLink
+import goggles.svg.Svg
+import goggles.api.layout.ForceLink
 
 import scala.scalajs.js.Dynamic.literal
 import scalacss.ScalatagsCss._
@@ -47,7 +47,7 @@ object ForceGraph {
     import com.oomagnitude.rx.Rxs._
     import com.oomagnitude.dom.all._
 
-    val (width, height) = viz.dimensions(aspectRatio)
+    val (width, height) = goggles.api.dimensions(aspectRatio)
     val distance = linkDistance(width, height)
 
     val force = d3.layout.force

@@ -4,11 +4,11 @@ import com.oomagnitude.css.{Styles => style}
 import com.oomagnitude.metrics.model.Metrics._
 import com.oomagnitude.model.ChartData
 import com.oomagnitude.rx.Rxs._
-import d3.all._
+import goggles.d3.all._
 import org.scalajs.dom.html.Div
 import rx._
-import svg.Svg
-import viz.scale.LinearScale
+import goggles.svg.Svg
+import goggles.api.scale.LinearScale
 
 import scala.scalajs.js.JSConverters._
 import scalacss.ScalatagsCss._
@@ -18,7 +18,7 @@ import scalatags.JsDom.{TypedTag, svgAttrs => sa, svgTags => st}
 object Gabor {
 
   def apply(data: ChartData[LabeledGaussians], aspectRatio: Double, params: GaussianParams) = {
-    val (width, height) = viz.dimensions(aspectRatio)
+    val (width, height) = goggles.api.dimensions(aspectRatio)
     val svgs = Var(List.empty[TypedTag[Div]])
 
     // TODO: config for expected range of values. MNIST is reverse (0 means white, 255 means black)

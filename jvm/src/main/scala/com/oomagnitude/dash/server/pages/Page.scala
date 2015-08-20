@@ -9,22 +9,9 @@ import scalatags.Text.all._
 
 object Page {
   val ChartBuilderBoot = "com.oomagnitude.pages.ChartBuilder().main(document.getElementById('contents'))"
-  val TreeBoot = "examples.d3.ReingoldTilfordTree().main(document.getElementById('contents'))"
-  val RadialTreeBoot = "examples.d3.RadialReingoldTilfordTree().main(document.getElementById('contents'))"
-  val ZoomablePartitionSunburstBoot = "examples.d3.ZoomableSunburst().main(document.getElementById('contents'))"
-  val ForceGraphBoot = "examples.d3.ForceDirectedGraph().main(document.getElementById('contents'))"
-  val ForceGraphDynamicBoot = "examples.d3.ForceDirectedGraphDynamic().main(document.getElementById('contents'))"
-  val ForceGraphFacadeBoot = "examples.d3.ForceDirectedGraphFacade().main(document.getElementById('contents'))"
   val TimerBoot = "examples.rx.Timer().main(document.getElementById('contents'))"
-  val TimerAngularBoot = "examples.rx.TimerAngular().main(document.getElementById('contents'))"
 
   val vizPages = Map(
-    "tree" -> TreeBoot,
-    "radialTree" -> RadialTreeBoot,
-    "sunburst" -> ZoomablePartitionSunburstBoot,
-    "forceGraphRx" -> ForceGraphBoot,
-    "forceGraphDynamic" -> ForceGraphDynamicBoot,
-    "forceGraphFacade" -> ForceGraphFacadeBoot,
     "timerRx" -> TimerBoot
   )
 

@@ -6,7 +6,7 @@ import com.oomagnitude.metrics.model.Metrics._
 import com.oomagnitude.model.{ChartData, ChartModel, ListWithId}
 import com.oomagnitude.rx.Rxs
 import com.oomagnitude.view._
-import d3.scale.D3Scale
+import goggles.d3.scale.D3Scale
 import org.scalajs.dom.html
 import org.scalajs.dom.raw.MouseEvent
 
