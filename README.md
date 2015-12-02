@@ -27,5 +27,7 @@ The metrics data objects are specified in the [metrics-shared](https://github.co
 project and take the form `DataPoint[T]`. The time raster is in arbitrary units called `timestep`. For details of
 expected format for metrics data, see [metrics-shared](https://github.com/oomagnitude/metrics-shared).
 
+The [metrics-shared](https://github.com/oomagnitude/metrics-shared) project also contains example data that can be
+used to render charts in the dashboard application.
 
 
