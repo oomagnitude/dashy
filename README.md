@@ -12,6 +12,9 @@ Additional visualizations can be added
 
 ## to run
 
+First, provide some JSON-formatted data and a root path to it by setting environment variable `METRICS_ROOT`. There is
+example data in the [metrics-shared](https://github.com/oomagnitude/metrics-shared) project to get you started.
+
 ```
 $ sbt
 > project dashJVM
